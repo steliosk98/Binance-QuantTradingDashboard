@@ -33,7 +33,53 @@ Agent memory across sessions. Append-only; one section per stage.
 - `gitleaks detect` → "no leaks found"
 - CI green on GitHub → **BLOCKED**, see below.
 
-### Known issues / blockers
+### Unblocked (2026-06-10, later same day)
+- Human ran `gh auth login` (account steliosk98). Created private repo
+  `steliosk98/Binance-QuantTradingDashboard` via `gh repo create --source .`, pushed main +
+  stage branch, opened PR #1. First CI run: gitleaks job failed with 403 (default GITHUB_TOKEN
+  lacked PR read) → fixed by adding `permissions: contents: read, pull-requests: read` to the job.
+  All checks green, merged PR #1, CI green on main (run 27299819653). **Stage 0 fully complete.**
+- Note for later: GitHub warns actions/checkout@v4 + gitleaks-action@v2 run on deprecated Node 20
+  (forced to Node 24 from 2026-06-16). Revisit action versions during Stage 9 hardening.
+
+## Stage 1 — Binance REST client + historical backfill (2026-06-10)
+
+### Built
+- `app/core/ratelimit.py`: WeightLimiter — tracks `X-MBX-USED-WEIGHT-1M`, throttles at 80% of the
+  per-minute weight limit, injectable clock/sleeper for tests.
+- `app/ingestion/binance_client.py`: async httpx client for spot klines + futures
+  funding/OI/long-short ratio; 429/418 honor Retry-After, 5xx + transport errors retried with
+  exponential backoff; all REST centralized here per ground rule 6.
+- SQLAlchemy models + Alembic migration `0001`: `candles` (TimescaleDB hypertable, 7-day chunks),
+  `funding_rates`, `open_interest`, `long_short_ratio`.
+- `app/ingestion/backfill.py` CLI: gap-detection-driven (diff expected grid vs DB, fetch only
+  missing ranges) → idempotent + resumable + gap repair in one mechanism. Upserts via
+  `ON CONFLICT DO UPDATE`.
+- `app/ingestion/scheduler.py`: APScheduler top-ups (futures data 5m, candles 15m).
+- CI: backend job now runs against a timescaledb service container.
+
+### Key decisions / deviations
+- **Bug found & fixed during acceptance:** Binance `fundingRate` and `/futures/data/*` endpoints
+  return the LATEST `limit` rows when only `startTime` is sent. First implementation paginated
+  forward by cursor and silently fetched only recent data. Rewrote to always send explicit
+  [startTime, endTime] windows (`_fetch_windows`).
+- `session_scope` initially wrapped `session.begin()`, which broke on mid-batch commits → now
+  commits on success / rolls back on error.
+- Used raw httpx instead of python-binance (spec allows): less magic, easier weight control.
+- DB tests run against real TimescaleDB (compose locally, service container in CI); no skips.
+
+### Verification (acceptance criteria)
+- `uv run ruff check .` → pass; `uv run mypy` → "no issues in 21 source files";
+  `uv run pytest -q` → **21 passed** (rate limiter, client incl. 429 retry, gap logic,
+  DB idempotency + gap-repair + upsert-update).
+- Backfill BTCUSDT+ETHUSDT 1h 2 years: `python -m app.ingestion.backfill --symbols BTCUSDT,ETHUSDT
+  --intervals 1h --no-futures` → **17,520 rows each** (= 2×365×24 exactly, zero downtime gaps).
+- Re-run → "complete, no gaps", 0 upserts, total count unchanged (35,040).
+- Futures data BTCUSDT: funding 7,397 rows (2019-09→now), OI 8,640, LSR 8,640 (full 30-day
+  retention at 5m = 288×30).
+- Full watchlist backfill (all 10 symbols, all intervals) kicked off to populate dev DB.
+
+### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH
   keys, no keychain credential, no `GITHUB_TOKEN`. Push / PR / GitHub CI verification cannot be
