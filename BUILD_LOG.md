@@ -79,6 +79,36 @@ Agent memory across sessions. Append-only; one section per stage.
   retention at 5m = 288×30).
 - Full watchlist backfill (all 10 symbols, all intervals) kicked off to populate dev DB.
 
+## Stage 2 — Market data REST API + basic charting UI (2026-06-10)
+
+### Built
+- REST endpoints under `/api/v1`: `candles` (asc order, start/end windows, limit ≤1000),
+  `symbols`, `funding`, `open-interest`, `ticker-summary` (last price, 24h %, vol, funding,
+  OI Δ — computed from DB candles). All endpoints capped; FastAPI DI session per request.
+- OpenAPI → TypeScript types via `openapi-typescript` (`src/api/schema.d.ts`) + thin typed
+  fetch client; TanStack Query + zustand stores.
+- Chart page: TradingView Lightweight Charts v5 (candles + volume histogram), symbol/interval
+  switchers, 5s polling, loading/empty/error states.
+- Dashboard: watchlist table polling ticker-summary every 5s; nulls render as "—".
+
+### Key decisions / deviations
+- lightweight-charts v5 API (`addSeries(CandlestickSeries, …)`) — spec assumed v4 style.
+- Fixed `ORDER BY DISTINCT` SQLAlchemy bug found by contract test.
+- Claude Preview/Chrome MCP unavailable in this environment → verified browser rendering with a
+  one-off Playwright script (screenshots in `docs/screenshots/`). Playwright stays as a dev dep
+  (needed for Stage 9 E2E anyway).
+
+### Verification (acceptance criteria)
+- Backend: ruff + mypy clean, **28 tests passed** (contract tests: pagination, validation 422s,
+  empty ranges, ticker shape).
+- Frontend: eslint + tsc clean, **6 tests passed** (chart data wiring, interval switch refetch,
+  empty/error states, dashboard table).
+- Browser (Playwright vs compose stack): chart page renders 7 canvases of real BTC 1h data from
+  local DB; switching to ETHUSDT/1d re-renders; dashboard shows 10 watchlist rows with live-ish
+  prices (BTC 61,882). Screenshots: `docs/screenshots/stage2-*.png`.
+- Full watchlist backfill completed in background: 1m 302k, 5m 165k, 15m 51.8k, 1h 105k, 4h 26k,
+  1d 4.4k candle rows + funding/OI/LSR for all 10 symbols.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH

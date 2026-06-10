@@ -1,15 +1,16 @@
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import App from './App'
+import { renderWithProviders } from './test/utils'
+
+vi.stubGlobal(
+  'fetch',
+  vi.fn(async () => new Response(JSON.stringify({ tickers: [] }))),
+)
 
 describe('App shell', () => {
   it('renders the top navigation', () => {
-    render(
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>,
-    )
+    renderWithProviders(<App />)
     for (const label of [
       'Dashboard',
       'Chart',
