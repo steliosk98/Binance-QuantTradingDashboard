@@ -13,7 +13,7 @@ Built in stages — see [BUILD_LOG.md](BUILD_LOG.md) for progress.
 
 - ✅ Stage 0 — Repo scaffolding, CI, Docker skeleton
 - ✅ Stage 1 — Binance REST client + historical backfill
-- ⬜ Stage 2 — Market data REST API + basic charting UI
+- ✅ Stage 2 — Market data REST API + basic charting UI
 - ⬜ Stage 3 — WebSocket live layer
 - ⬜ Stage 4 — Analytics engine (indicators + statistics)
 - ⬜ Stage 5 — Microstructure + derivatives + regime widget
