@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     binance_testnet_api_secret: str = ""
     secret_key: str = ""
     app_password_hash: str = ""
+    sentry_dsn: str = ""
+    json_logs: bool = False
 
     @property
     def auth_enabled(self) -> bool:

@@ -12,10 +12,17 @@ from app.api.portfolio import router as portfolio_router
 from app.api.settings import router as settings_router
 from app.api.ws import router as ws_router
 from app.core.config import get_settings
+from app.core.logging import request_id_middleware, setup_json_logging, setup_sentry
 
 settings = get_settings()
 
-app = FastAPI(title=settings.app_name, version="0.1.0")
+if settings.json_logs:
+    setup_json_logging()
+setup_sentry()
+
+app = FastAPI(title=settings.app_name, version="1.0.0")
+
+app.middleware("http")(request_id_middleware)
 
 # CORS locked to the configured frontend origin(s).
 app.add_middleware(
