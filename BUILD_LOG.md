@@ -193,6 +193,38 @@ Agent memory across sessions. Append-only; one section per stage.
   4 tabs functional incl. for SOLUSDT; pairs verdict rendered; heatmap renders.
   Screenshots: `docs/screenshots/stage4-*.png`.
 
+## Stage 5 — Microstructure + derivatives + regime widget (2026-06-11)
+
+### Built
+- `app/analytics/microstructure.py`: order book imbalance (top 5/10/20), spread bps, rolling-window
+  CVD (1m/5m, quote-volume signed by taker side). Book maintainer now publishes imbalance+spread in
+  every `book:` message; worker streams throttled (1/s) `cvd:{symbol}` from aggTrades.
+- `app/analytics/regime.py` (§4.5): trend via ADX(14, new Wilder implementation) + Hurst on
+  returns; volatility percentile of current 30-bar realized vol vs history; funding extremity
+  percentile. `GET /api/v1/analytics/regime` (single symbol or whole watchlist, cached) +
+  `GET /analytics/funding-extremes` (ranked by |funding|) + `GET /api/v1/long-short`.
+- Frontend: MicroPanel (imbalance 5/20 + CVD 1m/5m live sparklines + spread) on Chart; Futures
+  panel (funding %, OI, L/S ratio Plotly charts + live basis from marks topic); dashboard Regime
+  column (labels like "Trending · High Vol · Crowded Shorts") + Funding Extremes widget.
+
+### Key decisions / deviations
+- classify_trend is hierarchical: Hurst ≤0.45 → Mean-reverting; else ADX ≥25 **or** Hurst ≥0.55 →
+  Trending (Hurst on returns is ~0.5 for steady drift trends, so requiring both was wrong —
+  caught by the synthetic-regime test).
+- Basis uses mark vs index from the `marks` topic (REST-poller-backed where futures WS blocked).
+
+### Verification (acceptance criteria)
+- Backend **85 tests** green (imbalance math incl. one-sided books; CVD accumulation/expiry/window
+  divergence on synthetic trades; regime classifier on synthetic trending/mean-reverting/crowded-
+  funding regimes). Frontend **19 tests** green (sparkline, regime labels, funding-extremes
+  ordering). ruff/mypy/eslint/tsc clean.
+- Live: regime endpoint returns labels for all 10 symbols (e.g. BTC "Trending/High Vol/Balanced",
+  adx 23.4, hurst 0.61); funding-extremes sorted desc by |rate| ✓ (AVAX −13.4% ann. first).
+- Live streams over /ws: 8 CVD updates + 100 imbalance updates in 10s, values moving ✓.
+- Browser (Playwright): dashboard shows regime labels + correctly-ranked funding extremes; chart
+  micro-panel draws 4 live sparklines; futures panel renders funding/OI/LSR charts.
+  Screenshots: `docs/screenshots/stage5-*.png`.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH

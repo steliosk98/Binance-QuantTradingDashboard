@@ -76,6 +76,20 @@ def atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> 
     return rma(true_range(high, low, close), period)
 
 
+def adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Average Directional Index (Wilder)."""
+    up_move = high.diff()
+    down_move = -low.diff()
+    plus_dm = up_move.where((up_move > down_move) & (up_move > 0), 0.0).fillna(0.0)
+    minus_dm = down_move.where((down_move > up_move) & (down_move > 0), 0.0).fillna(0.0)
+    tr = true_range(high, low, close)
+    atr_ = rma(tr, period)
+    plus_di = 100 * rma(plus_dm, period) / atr_
+    minus_di = 100 * rma(minus_dm, period) / atr_
+    dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di)
+    return rma(dx, period)
+
+
 def vwap_session(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series) -> pd.Series:
     """Session VWAP, resetting at each UTC day boundary."""
     typical = (high + low + close) / 3

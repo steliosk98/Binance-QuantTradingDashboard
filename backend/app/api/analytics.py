@@ -227,6 +227,76 @@ async def get_correlation(
     return payload
 
 
+@router.get("/regime")
+async def get_regime(
+    db: DbSession,
+    symbol: Annotated[str | None, Query(min_length=5, max_length=20)] = None,
+    interval: str = "1h",
+) -> dict[str, Any]:
+    """Regime labels for one symbol or the whole watchlist."""
+    from sqlalchemy import select
+
+    from app.analytics.regime import classify_regime
+    from app.models import FundingRate
+
+    _validate_interval(interval)
+    symbols = [symbol.upper()] if symbol else get_settings().watchlist_symbols
+    redis = get_redis()
+    out: dict[str, Any] = {}
+    for sym in symbols:
+        df = await load_candles_df(db, sym, interval, 1500)
+        if df.empty:
+            out[sym] = None
+            continue
+        key = cache_key("regime", sym, interval, _last_candle_ms(df), {})
+        cached = await get_cached(redis, key)
+        if cached is not None:
+            out[sym] = cached
+            continue
+        result = await db.execute(
+            select(FundingRate.funding_time, FundingRate.rate)
+            .where(FundingRate.symbol == sym)
+            .order_by(FundingRate.funding_time.desc())
+            .limit(360)  # ~120 days of 8h funding
+        )
+        rows = result.all()
+        funding = pd.Series([r[1] for r in reversed(rows)], dtype=float) if rows else None
+        regime = classify_regime(df, funding, interval).to_dict()
+        await set_cached(redis, key, regime)
+        out[sym] = regime
+    return {"interval": interval, "regimes": out}
+
+
+@router.get("/funding-extremes")
+async def get_funding_extremes(db: DbSession) -> dict[str, Any]:
+    """Watchlist ranked by absolute annualized funding (most extreme first)."""
+    from sqlalchemy import select
+
+    from app.models import FundingRate
+
+    entries: list[dict[str, Any]] = []
+    for sym in get_settings().watchlist_symbols:
+        result = await db.execute(
+            select(FundingRate.rate, FundingRate.funding_time)
+            .where(FundingRate.symbol == sym)
+            .order_by(FundingRate.funding_time.desc())
+            .limit(1)
+        )
+        row = result.first()
+        if row is None:
+            continue
+        rate = float(row[0])
+        entries.append(
+            {
+                "symbol": sym,
+                "funding_rate": rate,
+                "annualized_pct": rate * 3 * 365 * 100,  # 8h funding → 3/day
+            }
+        )
+    entries.sort(key=lambda e: abs(e["funding_rate"]), reverse=True)
+    return {"extremes": entries}
+
+
 @router.get("/stats/pairs")
 async def get_pairs(
     db: DbSession,

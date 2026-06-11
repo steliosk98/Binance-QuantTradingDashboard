@@ -12,6 +12,7 @@ from typing import Any
 import httpx
 from redis.asyncio import Redis
 
+from app.analytics.microstructure import book_imbalance, spread_bps
 from app.core.config import get_settings
 from app.ingestion.orderbook import DepthDiff, OrderBook, SequenceGap
 from app.ingestion.ws_streams import BackoffPolicy, consume_stream
@@ -82,7 +83,11 @@ class BookMaintainer:
 
     async def publish(self) -> None:
         levels = self.book.top_levels(get_settings().orderbook_depth_levels)
-        payload = json.dumps({"type": "book", **levels})
+        imbalance = {
+            f"imbalance_{n}": book_imbalance(levels["bids"], levels["asks"], n) for n in (5, 10, 20)
+        }
+        spread = spread_bps(self.book.best_bid(), self.book.best_ask())
+        payload = json.dumps({"type": "book", **levels, **imbalance, "spread_bps": spread})
         await self.redis.set(f"book:{self.symbol}", payload, ex=30)
         await self.redis.publish(f"book:{self.symbol}", payload)
 

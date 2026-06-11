@@ -20,6 +20,7 @@ from redis.asyncio import Redis
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.analytics.microstructure import CvdTracker
 from app.core.config import get_settings
 from app.ingestion.binance_client import Kline
 from app.ingestion.upserts import upsert_candles
@@ -79,20 +80,29 @@ async def handle_kline(
         await session.commit()
 
 
+#: Per-symbol rolling CVD state (lives in the worker process).
+_cvd_trackers: dict[str, CvdTracker] = {}
+
+#: Throttle CVD publishes to at most one per second per symbol.
+_cvd_last_published: dict[str, int] = {}
+
+
 async def handle_agg_trade(msg: dict[str, Any], redis: Redis) -> None:
     symbol = str(msg["s"]).upper()
     price = float(msg["p"])
     qty = float(msg["q"])
     value = price * qty
+    ts = int(msg["T"])
+    is_buyer_maker = bool(msg["m"])
     whale_threshold = get_settings().whale_threshold_usd
     payload = {
         "type": "trade",
         "symbol": symbol,
-        "ts": int(msg["T"]),
+        "ts": ts,
         "price": price,
         "qty": qty,
         "value": value,
-        "is_buyer_maker": bool(msg["m"]),
+        "is_buyer_maker": is_buyer_maker,
         "whale": value >= whale_threshold,
     }
     await redis.publish(f"trades:{symbol}", json.dumps(payload))
@@ -100,6 +110,16 @@ async def handle_agg_trade(msg: dict[str, Any], redis: Redis) -> None:
         await redis.publish("whales", json.dumps(payload))
         await redis.lpush("recent_whales", json.dumps(payload))
         await redis.ltrim("recent_whales", 0, 99)
+
+    tracker = _cvd_trackers.setdefault(symbol, CvdTracker())
+    tracker.add_trade(ts, value, is_buyer_maker)
+    if ts - _cvd_last_published.get(symbol, 0) >= 1000:
+        _cvd_last_published[symbol] = ts
+        cvd_payload = json.dumps(
+            {"type": "cvd", "symbol": symbol, "ts": ts, **tracker.snapshot(ts)}
+        )
+        await redis.set(f"cvd:{symbol}", cvd_payload, ex=60)
+        await redis.publish(f"cvd:{symbol}", cvd_payload)
 
 
 async def handle_ticker_arr(msg: list[dict[str, Any]], redis: Redis) -> None:
