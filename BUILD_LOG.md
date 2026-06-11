@@ -300,6 +300,43 @@ Agent memory across sessions. Append-only; one section per stage.
 - Live restart recovery: `docker restart` of the paper container mid-run → resumed from DB state.
 - Screenshot: `docs/screenshots/stage7-paper.png`.
 
+## Stage 8 — Portfolio (read-only) + settings + auth (2026-06-11)
+
+### Built
+- `app/core/security.py`: Fernet (key derived from SECRET_KEY via SHA-256), argon2 password
+  verify, HS256 JWT (24 h TTL).
+- Auth: `POST /api/v1/auth/login` (+ `/status`); `require_auth` dependency on every router
+  except health/auth; WebSocket authenticates via `?token=` inside the handler (closes 4401).
+  Auth enforced iff SECRET_KEY + APP_PASSWORD_HASH are both set (explicit, never half-on).
+  CORS restricted to configured origins. Compose dev password: `cryptoquant-dev`.
+- Settings (migration 0005 `app_settings`): general settings (watchlist, fee/slippage, whale
+  threshold) + API keys stored Fernet-encrypted, exposed only as `{configured: bool}`; DELETE
+  supported. Settings page complete.
+- Portfolio: signed read-only `GET /api/v3/account` (server-time sync), USD valuation via cached
+  tickers, allocation pie + balances table; tab hidden unless keys configured.
+- Frontend: login gate (LoginPage when auth enabled & no token), token in localStorage,
+  Authorization header on all calls, 401 → token cleared → back to login; WS manager re-evaluates
+  its URL per (re)connect so the token applies right after login (bug found by live Playwright
+  check — status stayed "offline" after login with the constructor-captured URL).
+
+### Key decisions / deviations
+- No real read-only Binance keys available in this environment → "Portfolio renders balances"
+  verified via mocked signed-client test + component test with fixture balances; the live checks
+  cover the no-keys path (tab hidden) and the full auth flow.
+
+### Verification (acceptance criteria)
+- Backend **124 tests** green: Fernet round-trip; argon2 verify; JWT expiry raises; 401 on
+  /symbols, /settings, /portfolio/status without token; login flow (wrong pw 401 → token works →
+  garbage token 401); settings round-trip; **grep test: API key/secret never appear in any
+  response body and stored ciphertext ≠ plaintext**; portfolio with mocked account (balances,
+  USD valuation, zero-balance filtering); portfolio 404 without keys. Frontend **31 tests**.
+- Live (compose with auth enabled): unauth /symbols → 401, /health → 200 (public), wrong pw →
+  401, login → token (147 chars) → 200; portfolio status `{configured:false}`.
+- Browser (Playwright): login gate shown; wrong password rejected with message; correct password
+  → live dashboard; **Portfolio tab hidden without keys** ✓; Settings page renders general form +
+  key status; WS reconnects authenticated → "live" after login ✓.
+  Screenshots: `docs/screenshots/stage8-*.png`.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH

@@ -31,6 +31,8 @@ services:
       DATABASE_URL: postgresql+asyncpg://cryptoquant:cryptoquant@db:5432/cryptoquant
       REDIS_URL: redis://redis:6379/0
       CORS_ORIGINS: http://localhost:5173
+      SECRET_KEY: dev-secret-key-change-in-production
+      APP_PASSWORD_HASH: "$$argon2id$$v=19$$m=65536,t=3,p=4$$ToaJFFmbaV0qiQKJ25+Npw$$z05JW0kVbagfpVuS2tdC9C9RWVU1IeGNuQqxW4XeZSs"
     ports:
       - "8000:8000"
     depends_on:

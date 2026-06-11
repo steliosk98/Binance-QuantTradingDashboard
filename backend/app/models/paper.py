@@ -40,6 +40,13 @@ class PaperOrder(Base):
     testnet_order_id: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
 
+class AppSetting(Base):
+    __tablename__ = "app_settings"
+
+    key: Mapped[str] = mapped_column(String(60), primary_key=True)
+    value_json: Mapped[dict] = mapped_column(JSON)  # type: ignore[type-arg]
+
+
 class PaperEquity(Base):
     __tablename__ = "paper_equity"
 

@@ -7,9 +7,10 @@ from app.models.market import (
     LongShortRatio,
     OpenInterest,
 )
-from app.models.paper import PaperEquity, PaperInstance, PaperOrder
+from app.models.paper import AppSetting, PaperEquity, PaperInstance, PaperOrder
 
 __all__ = [
+    "AppSetting",
     "Backtest",
     "Base",
     "Candle",

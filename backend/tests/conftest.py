@@ -29,6 +29,7 @@ TABLES = [
     "paper_instances",
     "paper_orders",
     "paper_equity",
+    "app_settings",
 ]
 
 

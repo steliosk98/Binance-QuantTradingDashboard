@@ -17,6 +17,14 @@ class Settings(BaseSettings):
     whale_threshold_usd: float = 250_000.0
     binance_testnet_api_key: str = ""
     binance_testnet_api_secret: str = ""
+    secret_key: str = ""
+    app_password_hash: str = ""
+
+    @property
+    def auth_enabled(self) -> bool:
+        """Auth is enforced when both SECRET_KEY and APP_PASSWORD_HASH are set."""
+        return bool(self.secret_key and self.app_password_hash)
+
     orderbook_symbols: str = "BTCUSDT,ETHUSDT"
     orderbook_depth_levels: int = 20
 

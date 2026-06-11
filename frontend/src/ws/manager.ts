@@ -10,7 +10,7 @@ type StatusListener = (status: WsStatus) => void
 const MAX_BACKOFF_MS = 15_000
 
 export class WsManager {
-  private url: string
+  private urlProvider: () => string
   private ws: WebSocket | null = null
   private handlers = new Map<string, Set<TopicHandler>>()
   private statusListeners = new Set<StatusListener>()
@@ -19,15 +19,17 @@ export class WsManager {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   status: WsStatus = 'closed'
 
-  constructor(url: string) {
-    this.url = url
+  constructor(url: string | (() => string)) {
+    // URL is re-evaluated on every (re)connect so a token acquired after
+    // login is picked up automatically.
+    this.urlProvider = typeof url === 'string' ? () => url : url
   }
 
   connect(): void {
     this.closedByUser = false
     if (this.ws && this.ws.readyState <= WebSocket.OPEN) return
     this.setStatus('connecting')
-    this.ws = new WebSocket(this.url)
+    this.ws = new WebSocket(this.urlProvider())
     this.ws.onopen = () => {
       this.attempt = 0
       this.setStatus('open')
@@ -116,14 +118,21 @@ export class WsManager {
 
 function defaultWsUrl(): string {
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  return `${proto}://${window.location.host}/ws`
+  let url = `${proto}://${window.location.host}/ws`
+  try {
+    const token = localStorage.getItem('cryptoquant_token')
+    if (token) url += `?token=${encodeURIComponent(token)}`
+  } catch {
+    // no localStorage (tests)
+  }
+  return url
 }
 
 let instance: WsManager | null = null
 
 export function getWsManager(): WsManager {
   if (!instance) {
-    instance = new WsManager(defaultWsUrl())
+    instance = new WsManager(defaultWsUrl)
   }
   return instance
 }

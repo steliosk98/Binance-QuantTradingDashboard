@@ -46,6 +46,16 @@ async def _relay(pubsub: PubSub, websocket: WebSocket) -> None:
 
 @router.websocket("/ws")
 async def ws_hub(websocket: WebSocket) -> None:
+    from app.core.config import get_settings
+    from app.core.security import verify_token
+
+    if get_settings().auth_enabled:
+        token = websocket.query_params.get("token", "")
+        try:
+            verify_token(token)
+        except Exception:
+            await websocket.close(code=4401, reason="unauthorized")
+            return
     await websocket.accept()
     redis = get_redis()
     pubsub = redis.pubsub()
