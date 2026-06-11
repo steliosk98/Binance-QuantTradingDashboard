@@ -39,6 +39,19 @@ services:
       redis:
         condition: service_healthy
 
+  worker:
+    build: ./backend
+    command: ["python", "-m", "app.ingestion.worker"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://cryptoquant:cryptoquant@db:5432/cryptoquant
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
   frontend:
     build: ./frontend
     environment:

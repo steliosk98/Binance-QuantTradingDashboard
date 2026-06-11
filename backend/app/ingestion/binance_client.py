@@ -150,6 +150,12 @@ class BinanceClient:
         rows = await self._get(SPOT_BASE, "/api/v3/klines", params, weight=5)
         return [Kline.from_row(row) for row in rows]
 
+    async def get_premium_index(self, symbol: str | None = None) -> list[dict[str, Any]]:
+        """Mark price / index / funding for all (or one) USD-M futures symbols."""
+        params: dict[str, Any] = {"symbol": symbol} if symbol else {}
+        result = await self._get(FUTURES_BASE, "/fapi/v1/premiumIndex", params, weight=10)
+        return list(result) if isinstance(result, list) else [result]
+
     async def get_funding_rates(
         self,
         symbol: str,

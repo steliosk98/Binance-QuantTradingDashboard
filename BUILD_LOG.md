@@ -109,6 +109,52 @@ Agent memory across sessions. Append-only; one section per stage.
 - Full watchlist backfill completed in background: 1m 302k, 5m 165k, 15m 51.8k, 1h 105k, 4h 26k,
   1d 4.4k candle rows + funding/OI/LSR for all 10 symbols.
 
+## Stage 3 — WebSocket live layer (2026-06-11)
+
+### Built
+- `app/ingestion/worker.py`: WS ingestion process — spot combined stream (klines 6 intervals ×
+  watchlist + aggTrades + per-symbol tickers), futures stream (!forceOrder + !markPrice), REST
+  premium-index poller (5s), order book maintainers for BTCUSDT/ETHUSDT. New compose `worker`
+  service.
+- `app/ingestion/orderbook.py`: pure OrderBook implementing Binance's documented snapshot+diff
+  sync; any sequence gap → full resync (never patched). `book_maintainer.py` wires it to WS +
+  REST snapshot + Redis.
+- `app/ingestion/ws_streams.py`: reconnecting consumer — exponential backoff (cap 60s), proactive
+  23h reconnect, injectable for tests.
+- `app/api/ws.py`: `/ws` hub — per-topic subscribe/unsubscribe over Redis pub/sub
+  (`candles:SYM:IV`, `trades:SYM`, `book:SYM`, `tickers`, `marks`, `liqs`, `whales`), topic
+  validation, 50-topic cap.
+- Migration 0002: `liquidations` table; worker persists force orders.
+- Frontend: `WsManager` (auto-reconnect + resubscribe), `useTopic`/`useWsStatus` hooks, nav WS
+  status indicator, live chart (forming candle + sub-second trade ticks), depth panel with spread,
+  live dashboard tickers, liquidation + whale feeds. Vite `/ws` proxy.
+
+### Key decisions / deviations
+- **Binance array streams (`!ticker@arr`, `!markPrice@arr`) deliver nothing inside combined-stream
+  URLs** (verified by probe). Switched to per-symbol `@ticker` streams.
+- **Futures WS (fstream.binance.com) is blocked on this network**: connects but never delivers
+  (verified host + container; futures REST works fine). Mitigation per spec Known Risks: REST
+  premium-index poller (5s) feeds the `marks` topic; futures WS consumer kept for deploy hosts
+  where it works; liquidation feed degrades to empty with a waiting state. Re-verify after Stage 9
+  deploy (EU region expected to work).
+- Whale trades published to dedicated `whales` topic + recent list in Redis (threshold from
+  `WHALE_THRESHOLD_USD`).
+- Sub-second chart updates achieved by moving the forming candle's close/high/low on every
+  aggTrade tick client-side (kline stream itself only pushes ~2s).
+
+### Verification (acceptance criteria)
+- ruff + mypy strict clean; backend **43 tests** (order book sync: stale/chained/overlap/gap/
+  resync; reconnect with fake WS — exactly one reconnect; hub integration vs real Redis:
+  subscribe/receive/unsubscribe/validation); frontend **11 tests** (WsManager reconnect +
+  resubscribe + backoff + explicit close; chart/dashboard wiring).
+- Live pipeline measured via `/ws`: book 121 msg/12s (10/s), tickers 101/12s, trades median gap
+  1ms (sub-second ✓), candles ~2s + trade ticks, marks via REST poller.
+- Network kill: 50s `docker network disconnect` → "Temporary failure in name resolution" →
+  backoff → all 4 streams reconnected, both books resynced automatically ✓.
+- Depth accuracy: local best bid/ask == Binance REST snapshot exactly (0.00 bps diff) ✓.
+- Browser (Playwright): ws-status "live", depth panel populated (81 cells), feeds rendered,
+  tickers flowing into the page (frame inspection). Screenshots: `docs/screenshots/stage3-*.png`.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH

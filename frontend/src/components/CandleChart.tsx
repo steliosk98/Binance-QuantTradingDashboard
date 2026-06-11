@@ -10,7 +10,22 @@ import {
 } from 'lightweight-charts'
 import type { Candle } from '../api/client'
 
-export default function CandleChart({ candles }: { candles: Candle[] }) {
+export interface LiveCandle {
+  open_time: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
+
+export default function CandleChart({
+  candles,
+  liveCandle,
+}: {
+  candles: Candle[]
+  liveCandle?: LiveCandle | null
+}) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
@@ -75,6 +90,24 @@ export default function CandleChart({ candles }: { candles: Candle[] }) {
     )
     chartRef.current?.timeScale().fitContent()
   }, [candles])
+
+  useEffect(() => {
+    if (!liveCandle || !candleSeriesRef.current || !volumeSeriesRef.current)
+      return
+    const time = (Date.parse(liveCandle.open_time) / 1000) as UTCTimestamp
+    candleSeriesRef.current.update({
+      time,
+      open: liveCandle.open,
+      high: liveCandle.high,
+      low: liveCandle.low,
+      close: liveCandle.close,
+    })
+    volumeSeriesRef.current.update({
+      time,
+      value: liveCandle.volume,
+      color: liveCandle.close >= liveCandle.open ? '#34d39955' : '#f8717155',
+    })
+  }, [liveCandle])
 
   return (
     <div
