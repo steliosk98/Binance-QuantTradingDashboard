@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api, type TickerSummary } from '../api/client'
+import CorrHeatmap from '../components/CorrHeatmap'
 import { LiquidationFeed, WhaleFeed } from '../components/LiveFeeds'
 import { useMarketStore } from '../stores/market'
 import { useTopic } from '../ws/hooks'
@@ -141,6 +142,9 @@ export default function DashboardPage() {
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <LiquidationFeed />
         <WhaleFeed />
+      </div>
+      <div className="mt-4">
+        <CorrHeatmap />
       </div>
     </div>
   )

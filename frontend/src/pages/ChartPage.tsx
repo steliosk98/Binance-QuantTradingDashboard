@@ -1,10 +1,25 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
-import CandleChart, { type LiveCandle } from '../components/CandleChart'
+import CandleChart, {
+  type LiveCandle,
+  type Overlay,
+  type PaneSeries,
+} from '../components/CandleChart'
 import DepthPanel from '../components/DepthPanel'
 import { INTERVALS, useMarketStore } from '../stores/market'
 import { useTopic } from '../ws/hooks'
+
+const INDICATOR_TOGGLES = [
+  'SMA 20',
+  'SMA 50',
+  'EMA 20',
+  'BB',
+  'VWAP',
+  'RSI',
+  'MACD',
+] as const
+type IndicatorName = (typeof INDICATOR_TOGGLES)[number]
 
 interface CandleMsg extends LiveCandle {
   type: string
@@ -16,12 +31,59 @@ interface CandleMsg extends LiveCandle {
 export default function ChartPage() {
   const { symbol, interval, setSymbol, setInterval } = useMarketStore()
   const [liveCandle, setLiveCandle] = useState<LiveCandle | null>(null)
+  const [active, setActive] = useState<Set<IndicatorName>>(new Set())
 
   const symbolsQuery = useQuery({ queryKey: ['symbols'], queryFn: api.symbols })
   const candlesQuery = useQuery({
     queryKey: ['candles', symbol, interval],
     queryFn: () => api.candles(symbol, interval),
   })
+  const indicatorsQuery = useQuery({
+    queryKey: ['indicators', symbol, interval],
+    queryFn: () => api.indicators(symbol, interval),
+    enabled: active.size > 0,
+  })
+
+  const ind = indicatorsQuery.data
+  const overlays: Overlay[] = []
+  const paneSeries: PaneSeries[] = []
+  if (ind) {
+    if (active.has('SMA 20'))
+      overlays.push({ id: 'sma20', color: '#60a5fa', data: ind.sma_20 })
+    if (active.has('SMA 50'))
+      overlays.push({ id: 'sma50', color: '#f59e0b', data: ind.sma_50 })
+    if (active.has('EMA 20'))
+      overlays.push({ id: 'ema20', color: '#a78bfa', data: ind.ema_20 })
+    if (active.has('VWAP'))
+      overlays.push({ id: 'vwap', color: '#f472b6', data: ind.vwap_session })
+    if (active.has('BB')) {
+      overlays.push({ id: 'bbu', color: '#52525b', data: ind.bb_upper })
+      overlays.push({ id: 'bbm', color: '#71717a', data: ind.bb_middle })
+      overlays.push({ id: 'bbl', color: '#52525b', data: ind.bb_lower })
+    }
+    let pane = 1
+    if (active.has('RSI')) {
+      paneSeries.push({ id: 'rsi', color: '#a78bfa', data: ind.rsi_14, pane })
+      pane += 1
+    }
+    if (active.has('MACD')) {
+      paneSeries.push({ id: 'macd', color: '#34d399', data: ind.macd, pane })
+      paneSeries.push({
+        id: 'macds',
+        color: '#f87171',
+        data: ind.macd_signal,
+        pane,
+      })
+    }
+  }
+
+  const toggle = (name: IndicatorName) =>
+    setActive((prev) => {
+      const next = new Set(prev)
+      if (next.has(name)) next.delete(name)
+      else next.add(name)
+      return next
+    })
 
   useTopic(`candles:${symbol}:${interval}`, (data) => {
     const msg = data as CandleMsg
@@ -84,6 +146,21 @@ export default function ChartPage() {
             </button>
           ))}
         </div>
+        <div className="flex gap-1" role="group" aria-label="Indicators">
+          {INDICATOR_TOGGLES.map((name) => (
+            <button
+              key={name}
+              onClick={() => toggle(name)}
+              className={`rounded px-2 py-1 text-xs font-medium ${
+                active.has(name)
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="flex min-h-0 flex-1 gap-3">
         <div className="min-w-0 flex-1 rounded border border-zinc-800 bg-zinc-900/50 p-2">
@@ -106,6 +183,8 @@ export default function ChartPage() {
             <CandleChart
               candles={candlesQuery.data.candles}
               liveCandle={liveCandle}
+              overlays={overlays}
+              paneSeries={paneSeries}
             />
           )}
         </div>

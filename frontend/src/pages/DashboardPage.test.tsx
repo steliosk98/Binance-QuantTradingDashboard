@@ -1,7 +1,15 @@
 import { screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import DashboardPage from './DashboardPage'
-import { renderWithProviders } from '../test/utils'
+import {
+  EMPTY_CORRELATION,
+  renderWithProviders,
+  routedFetch,
+} from '../test/utils'
+
+vi.mock('plotly.js-dist-min', () => ({
+  default: { react: vi.fn(), purge: vi.fn() },
+}))
 
 const TICKERS = {
   tickers: [
@@ -30,7 +38,12 @@ describe('DashboardPage', () => {
   it('renders the watchlist table from the API', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response(JSON.stringify(TICKERS))),
+      vi.fn(
+        routedFetch({
+          '/correlation': EMPTY_CORRELATION,
+          '/ticker-summary': TICKERS,
+        }),
+      ),
     )
     renderWithProviders(<DashboardPage />)
     await waitFor(() => expect(screen.getByText('BTCUSDT')).toBeInTheDocument())
