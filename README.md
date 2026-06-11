@@ -18,7 +18,7 @@ Built in stages — see [BUILD_LOG.md](BUILD_LOG.md) for progress.
 - ✅ Stage 4 — Analytics engine (indicators + statistics)
 - ✅ Stage 5 — Microstructure + derivatives + regime widget
 - ✅ Stage 6 — Backtesting engine + UI
-- ⬜ Stage 7 — Paper trading on Binance Testnet
+- ✅ Stage 7 — Paper trading on Binance Testnet
 - ⬜ Stage 8 — Portfolio (read-only) + settings + auth
 - ⬜ Stage 9 — Hardening, E2E, deployment
 
@@ -68,6 +68,16 @@ Backfill is idempotent: it diffs the expected candle grid against the DB and fet
 missing ranges (this also repairs gaps). Historical depth per spec: 2y of 1h/4h/1d, 90d of
 5m/15m, 30d of 1m. Note: tests require a running Postgres (`docker compose up -d db`);
 a `cryptoquant_test` database is created automatically.
+
+## Paper trading (Stage 7)
+
+Create strategy instances on the Paper Trading page (or via `POST /api/v1/paper/instances`).
+A separate runner process (`python -m app.paper.runner`, compose service `paper`) evaluates
+every running instance on each closed candle. Orders go to **Binance Spot Testnet** when
+`BINANCE_TESTNET_API_KEY/SECRET` are set; otherwise fills are simulated internally so the
+feature still works without credentials. Guards: max position, max daily loss (halts for the
+day), and a kill switch that takes effect within one evaluation cycle. There is no live
+trading mode anywhere in this codebase.
 
 ## Configuration
 

@@ -52,6 +52,20 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  paper:
+    build: ./backend
+    command: ["python", "-m", "app.paper.runner"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://cryptoquant:cryptoquant@db:5432/cryptoquant
+      REDIS_URL: redis://redis:6379/0
+      TRADING_MODE: testnet
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
   frontend:
     build: ./frontend
     environment:

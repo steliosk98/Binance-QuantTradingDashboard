@@ -263,6 +263,43 @@ Agent memory across sessions. Append-only; one section per stage.
 - Browser (Playwright): full results page renders; saved backtests reload after page refresh;
   2-curve comparison chart works. Screenshot: `docs/screenshots/stage6-backtest-results.png`.
 
+## Stage 7 — Paper trading on Binance Testnet (2026-06-11)
+
+### Built
+- `app/paper/executor.py`: SimExecutor (internal fills at ref ± slippage — "paper-paper" mode) and
+  TestnetExecutor (HMAC-signed market orders on testnet.binance.vision, server-time sync against
+  clock skew, long-only since spot, refuses to construct unless TRADING_MODE=testnet).
+  `build_executor()` picks testnet iff keys are configured.
+- `app/paper/engine.py`: per-instance evaluation on closed candles — strategy target → guarded
+  order (max-position clamp, max-daily-loss halt with UTC day reset), position accounting with
+  realized PnL across adds/reduces/flips, equity snapshot per evaluation. State persisted in
+  `paper_instances.state_json` → restart-safe.
+- `app/paper/runner.py` (compose service `paper`): psubscribes `candles:*`, evaluates all running
+  instances per closed candle. Kill switch = DB status check on every cycle.
+- Migration 0004: `paper_instances`, `paper_orders` (incl. `testnet_order_id`), `paper_equity`.
+- Lifecycle API: list/create/get + `/stop` (kill switch) + `/start`. Paper Trading page: create
+  form (schema-driven params + guards), instance table with live position/PnL/halted state, kill
+  switch button, order log, paper equity curve.
+
+### Key decisions / deviations
+- **No testnet keys present** (no `.env.local`) → runs in spec-sanctioned simulated-fill mode;
+  TestnetExecutor fully implemented and covered by mocked tests, activates automatically when
+  `BINANCE_TESTNET_API_KEY/SECRET` appear.
+- Testnet path is long-only (spot can't short); sim mode supports shorts.
+
+### Verification (acceptance criteria)
+- Backend **115 tests** green (sim fill slippage; guard clamp math; signal→order pipeline against
+  real DB with spike fixture → SELL order + state + equity row; stopped instance skipped; daily
+  loss halt; restart recovery — fresh session resumes identical state, no duplicate re-entry;
+  testnet executor signature/header/fill-parse with respx). Frontend **26 tests** green.
+- **Live acceptance: z-score instance on BTCUSDT 1m ran 04:23→05:26 UTC (63 one-minute
+  evaluations, >1 hour)** with 4 real signal-driven orders (2 round trips: short 62,600→cover
+  62,647; short 62,734→cover 62,724), equity tracked $997.6–$999.6, all visible in the UI ✓.
+- **Kill switch: stopped via API at ~05:27; 5 subsequent 1m candles produced zero new
+  evaluations** (equity frozen at 63 rows) — halts within one cycle ✓.
+- Live restart recovery: `docker restart` of the paper container mid-run → resumed from DB state.
+- Screenshot: `docs/screenshots/stage7-paper.png`.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH

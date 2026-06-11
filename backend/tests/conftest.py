@@ -19,7 +19,17 @@ TEST_DATABASE_URL = os.environ.get(
     "postgresql+asyncpg://cryptoquant:cryptoquant@localhost:5432/cryptoquant_test",
 )
 
-TABLES = ["candles", "funding_rates", "open_interest", "long_short_ratio"]
+TABLES = [
+    "candles",
+    "funding_rates",
+    "open_interest",
+    "long_short_ratio",
+    "liquidations",
+    "backtests",
+    "paper_instances",
+    "paper_orders",
+    "paper_equity",
+]
 
 
 async def _ensure_database() -> None:

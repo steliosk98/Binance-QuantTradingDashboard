@@ -7,6 +7,7 @@ from app.models.market import (
     LongShortRatio,
     OpenInterest,
 )
+from app.models.paper import PaperEquity, PaperInstance, PaperOrder
 
 __all__ = [
     "Backtest",
@@ -16,4 +17,7 @@ __all__ = [
     "Liquidation",
     "LongShortRatio",
     "OpenInterest",
+    "PaperEquity",
+    "PaperInstance",
+    "PaperOrder",
 ]

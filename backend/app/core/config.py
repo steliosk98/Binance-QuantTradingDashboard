@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     trading_mode: str = "testnet"
     cors_origins: str = "http://localhost:5173"
     whale_threshold_usd: float = 250_000.0
+    binance_testnet_api_key: str = ""
+    binance_testnet_api_secret: str = ""
     orderbook_symbols: str = "BTCUSDT,ETHUSDT"
     orderbook_depth_levels: int = 20
 
