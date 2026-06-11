@@ -15,15 +15,20 @@ vi.stubGlobal(
   'fetch',
   vi.fn(
     routedFetch({
+      '/auth/status': { auth_enabled: false },
+      '/portfolio/status': { configured: true },
       '/correlation': EMPTY_CORRELATION,
       '/ticker-summary': { tickers: [] },
+      '/regime': { interval: '1h', regimes: {} },
+      '/funding-extremes': { extremes: [] },
     }),
   ),
 )
 
 describe('App shell', () => {
-  it('renders the top navigation', () => {
+  it('renders the top navigation', async () => {
     renderWithProviders(<App />)
+    await screen.findByRole('link', { name: 'Portfolio' })
     for (const label of [
       'Dashboard',
       'Chart',

@@ -19,7 +19,7 @@ Built in stages — see [BUILD_LOG.md](BUILD_LOG.md) for progress.
 - ✅ Stage 5 — Microstructure + derivatives + regime widget
 - ✅ Stage 6 — Backtesting engine + UI
 - ✅ Stage 7 — Paper trading on Binance Testnet
-- ⬜ Stage 8 — Portfolio (read-only) + settings + auth
+- ✅ Stage 8 — Portfolio (read-only) + settings + auth
 - ⬜ Stage 9 — Hardening, E2E, deployment
 
 ## Stack
@@ -78,6 +78,15 @@ every running instance on each closed candle. Orders go to **Binance Spot Testne
 feature still works without credentials. Guards: max position, max daily loss (halts for the
 day), and a kill switch that takes effect within one evaluation cycle. There is no live
 trading mode anywhere in this codebase.
+
+## Auth & portfolio (Stage 8)
+
+Set `SECRET_KEY` and `APP_PASSWORD_HASH` (argon2 — generate with
+`uv run python -c "from app.core.security import hash_password; print(hash_password('yourpw'))"`)
+to enable single-user login; every API route and the WebSocket then require a JWT. The dev
+compose stack ships with password `cryptoquant-dev`. Read-only Binance keys entered on the
+Settings page are Fernet-encrypted at rest and never returned to the client; the Portfolio tab
+appears only when keys are configured.
 
 ## Configuration
 

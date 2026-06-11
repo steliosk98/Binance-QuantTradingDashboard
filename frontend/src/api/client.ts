@@ -11,6 +11,17 @@ export type TickerSummaryResponse =
 
 const BASE = '/api/v1'
 
+import { clearToken, getToken } from '../stores/auth'
+
+function authHeaders(): Record<string, string> {
+  const token = getToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+function handleUnauthorized(resp: Response): void {
+  if (resp.status === 401) clearToken()
+}
+
 async function getJson<T>(
   path: string,
   params?: Record<string, string | number>,
@@ -23,8 +34,9 @@ async function getJson<T>(
         ),
       ).toString()
     : ''
-  const resp = await fetch(`${BASE}${path}${qs}`)
+  const resp = await fetch(`${BASE}${path}${qs}`, { headers: authHeaders() })
   if (!resp.ok) {
+    handleUnauthorized(resp)
     throw new Error(`GET ${path} failed: ${resp.status}`)
   }
   return resp.json() as Promise<T>
@@ -209,16 +221,32 @@ export interface BacktestListEntry {
   metrics: BacktestMetrics | null
 }
 
-async function postJson<T>(path: string, body: unknown): Promise<T> {
+async function sendJson<T>(
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<T> {
   const resp = await fetch(`${BASE}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    method,
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: body === undefined ? undefined : JSON.stringify(body),
   })
   if (!resp.ok) {
-    throw new Error(`POST ${path} failed: ${resp.status}`)
+    handleUnauthorized(resp)
+    throw new Error(`${method} ${path} failed: ${resp.status}`)
   }
   return resp.json() as Promise<T>
+}
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  return sendJson<T>('POST', path, body)
+}
+
+export interface GeneralSettings {
+  watchlist: string[]
+  fee_bps: number
+  slippage_bps: number
+  whale_threshold_usd: number
 }
 
 export interface PaperInstanceSummary {
@@ -255,7 +283,39 @@ export interface PaperInstanceDetail extends PaperInstanceSummary {
   equity: [string, number, number, number][]
 }
 
+export interface PortfolioBalance {
+  asset: string
+  free: number
+  locked: number
+  usd_value: number | null
+}
+
+export interface PortfolioResponse {
+  balances: PortfolioBalance[]
+  total_usd: number
+  can_trade: boolean | null
+  account_type: string | null
+}
+
 export const api = {
+  login: (password: string) =>
+    postJson<{ token: string; token_type: string }>('/auth/login', {
+      password,
+    }),
+  authStatus: () => getJson<{ auth_enabled: boolean }>('/auth/status'),
+  settings: () => getJson<GeneralSettings>('/settings'),
+  saveSettings: (s: GeneralSettings) =>
+    sendJson<{ status: string }>('PUT', '/settings', s),
+  apiKeysStatus: () => getJson<{ configured: boolean }>('/settings/api-keys'),
+  saveApiKeys: (api_key: string, api_secret: string) =>
+    postJson<{ configured: boolean }>('/settings/api-keys', {
+      api_key,
+      api_secret,
+    }),
+  deleteApiKeys: () =>
+    sendJson<{ configured: boolean }>('DELETE', '/settings/api-keys'),
+  portfolioStatus: () => getJson<{ configured: boolean }>('/portfolio/status'),
+  portfolio: () => getJson<PortfolioResponse>('/portfolio'),
   paperInstances: () =>
     getJson<{ instances: PaperInstanceSummary[] }>('/paper/instances'),
   paperInstance: (id: string) =>

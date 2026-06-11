@@ -1,4 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '../api/client'
 import { useWsStatus } from '../ws/hooks'
 
 const STATUS_STYLES = {
@@ -32,6 +34,15 @@ const NAV_ITEMS = [
 ]
 
 export default function Layout() {
+  const portfolioStatus = useQuery({
+    queryKey: ['portfolio-status'],
+    queryFn: api.portfolioStatus,
+    retry: false,
+  })
+  const items = NAV_ITEMS.filter(
+    (item) =>
+      item.to !== '/portfolio' || portfolioStatus.data?.configured === true,
+  )
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-zinc-800 bg-zinc-900">
@@ -39,7 +50,7 @@ export default function Layout() {
           <span className="mr-6 text-lg font-bold text-emerald-400">
             CryptoQuant
           </span>
-          {NAV_ITEMS.map((item) => (
+          {items.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
