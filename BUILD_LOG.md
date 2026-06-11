@@ -155,6 +155,44 @@ Agent memory across sessions. Append-only; one section per stage.
 - Browser (Playwright): ws-status "live", depth panel populated (81 cells), feeds rendered,
   tickers flowing into the page (frame inspection). Screenshots: `docs/screenshots/stage3-*.png`.
 
+## Stage 4 — Analytics engine: indicators + statistics (2026-06-11)
+
+### Built
+- `app/analytics/indicators.py` (§4.1): SMA/EMA, RSI + ATR on true Wilder RMA (SMA-seeded —
+  matches TradingView), MACD, Bollinger, session+rolling VWAP, OBV, Stochastic, Ichimoku cloud,
+  volume profile.
+- `app/analytics/stats.py` (§4.2): log returns; annualized realized vol (close-to-close,
+  Parkinson, Garman-Klass); distribution summary (hist, skew, kurtosis, Jarque-Bera, QQ);
+  correlation matrix + rolling BTC beta; Hurst (R/S, rolling); z-score; ADF; Engle-Granger
+  cointegration with hedge ratio + spread z.
+- Redis caching keyed `(name, symbol, interval, last_candle_time, params-hash)` — new closed
+  candle invalidates naturally. Endpoints: `/api/v1/analytics/indicators`, `/stats/returns`,
+  `/stats/volatility`, `/stats/hurst` (incl. z-score), `/stats/correlation`, `/stats/pairs`.
+- Frontend: indicator toggles on Chart (SMA/EMA/BB/VWAP overlays; RSI + MACD in separate
+  lightweight-charts v5 panes); Research page (Distribution+QQ, 3-estimator vol, Hurst+z-score,
+  Pairs cointegration) with Plotly; dashboard 90-day correlation heatmap.
+
+### Key decisions / deviations
+- **pandas-ta not used** (abandoned upstream, numpy-2 incompatible). Indicators implemented
+  directly with pandas/numpy; golden tests reference Wilder's canonical RSI example and
+  hand-computed fixtures instead of pandas-ta output. Spec allows closest working alternative.
+- Initial ewm-based RSI failed the Wilder golden test (seeding differs) → implemented exact
+  SMA-seeded Wilder recursion.
+- `get_redis` now hands out one client per event loop (async Redis connections are loop-bound;
+  pytest creates a loop per test).
+
+### Verification (acceptance criteria)
+- ruff + mypy strict clean. Backend **72 tests** green: indicator goldens (RSI Wilder example
+  70.46/58.18 ✓), vol estimators agree on simulated GBM, Hurst ≈0.5 on white noise / >0.6 with
+  drift, ADF stationary-vs-walk, Engle-Granger detects (and rejects) cointegration, hedge ratio
+  ≈2.0 on synthetic pair, cache hit + invalidation-on-new-candle. Frontend **14 tests** green.
+- RSI/MACD vs TradingView: formula-level equivalence (Wilder RMA = TV's ta.rsi; MACD = EMA12−EMA26
+  with EMA9 signal) + golden tests; live values sane (RSI last 49.6–54.5 in range).
+- Cached analytics latency: ~18 ms (p95 bar: <200 ms) ✓.
+- Browser (Playwright): chart with SMA+BB overlays and RSI/MACD panes (15 canvases); Research all
+  4 tabs functional incl. for SOLUSDT; pairs verdict rendered; heatmap renders.
+  Screenshots: `docs/screenshots/stage4-*.png`.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH
