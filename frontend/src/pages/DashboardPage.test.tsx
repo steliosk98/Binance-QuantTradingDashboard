@@ -34,21 +34,69 @@ const TICKERS = {
   ],
 }
 
+const REGIMES = {
+  interval: '1h',
+  regimes: {
+    BTCUSDT: {
+      trend: 'Trending',
+      volatility: 'High Vol',
+      funding: 'Crowded Longs',
+      adx: 31.2,
+      hurst: 0.58,
+      vol_percentile: 88,
+      funding_percentile: 92,
+    },
+    DOGEUSDT: null,
+  },
+}
+
+const EXTREMES = {
+  extremes: [
+    { symbol: 'DOGEUSDT', funding_rate: -0.002, annualized_pct: -219.0 },
+    { symbol: 'BTCUSDT', funding_rate: 0.0001, annualized_pct: 10.95 },
+  ],
+}
+
+const ROUTES = {
+  '/correlation': EMPTY_CORRELATION,
+  '/ticker-summary': TICKERS,
+  '/regime': REGIMES,
+  '/funding-extremes': EXTREMES,
+}
+
 describe('DashboardPage', () => {
   it('renders the watchlist table from the API', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(
-        routedFetch({
-          '/correlation': EMPTY_CORRELATION,
-          '/ticker-summary': TICKERS,
-        }),
-      ),
-    )
+    vi.stubGlobal('fetch', vi.fn(routedFetch(ROUTES)))
     renderWithProviders(<DashboardPage />)
-    await waitFor(() => expect(screen.getByText('BTCUSDT')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getAllByText('BTCUSDT').length).toBeGreaterThan(0),
+    )
     expect(screen.getByText('+2.50%')).toBeInTheDocument()
     // Missing data renders as em-dashes, not a crash
-    expect(screen.getByText('DOGEUSDT')).toBeInTheDocument()
+    expect(screen.getAllByText('DOGEUSDT').length).toBeGreaterThan(0)
+  })
+
+  it('shows regime labels per symbol', async () => {
+    vi.stubGlobal('fetch', vi.fn(routedFetch(ROUTES)))
+    renderWithProviders(<DashboardPage />)
+    await waitFor(() =>
+      expect(screen.getByText('Trending')).toBeInTheDocument(),
+    )
+    expect(screen.getByText(/High Vol/)).toBeInTheDocument()
+    expect(screen.getByText(/Crowded Longs/)).toBeInTheDocument()
+  })
+
+  it('ranks funding extremes by magnitude', async () => {
+    vi.stubGlobal('fetch', vi.fn(routedFetch(ROUTES)))
+    renderWithProviders(<DashboardPage />)
+    await waitFor(() =>
+      expect(screen.getByTestId('funding-extremes')).toHaveTextContent(
+        '-219.00%',
+      ),
+    )
+    const widget = screen.getByTestId('funding-extremes')
+    const text = widget.textContent ?? ''
+    // DOGE (|-0.002|) listed before BTC (0.0001)
+    expect(text.indexOf('DOGEUSDT')).toBeLessThan(text.indexOf('BTCUSDT'))
   })
 })

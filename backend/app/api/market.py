@@ -121,6 +121,36 @@ async def get_open_interest(
     )
 
 
+@router.get("/long-short")
+async def get_long_short(
+    db: DbSession,
+    symbol: Annotated[str, Query(min_length=5, max_length=20)],
+    limit: Annotated[int, Query(ge=1, le=MAX_ENTRIES)] = 500,
+) -> dict[str, object]:
+    from app.models import LongShortRatio
+
+    symbol = symbol.upper()
+    query = (
+        select(LongShortRatio)
+        .where(LongShortRatio.symbol == symbol)
+        .order_by(LongShortRatio.ts.desc())
+        .limit(limit)
+    )
+    rows = list(reversed(list((await db.execute(query)).scalars())))
+    return {
+        "symbol": symbol,
+        "entries": [
+            {
+                "ts": r.ts.isoformat(),
+                "ratio": r.ratio,
+                "long_pct": r.long_pct,
+                "short_pct": r.short_pct,
+            }
+            for r in rows
+        ],
+    }
+
+
 async def _ticker_for_symbol(db: AsyncSession, symbol: str, now: datetime) -> TickerSummary:
     day_ago = now - timedelta(hours=24)
     result = await db.execute(

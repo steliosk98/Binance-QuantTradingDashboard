@@ -7,6 +7,8 @@ import CandleChart, {
   type PaneSeries,
 } from '../components/CandleChart'
 import DepthPanel from '../components/DepthPanel'
+import FuturesPanel from '../components/FuturesPanel'
+import MicroPanel from '../components/MicroPanel'
 import { INTERVALS, useMarketStore } from '../stores/market'
 import { useTopic } from '../ws/hooks'
 
@@ -32,6 +34,7 @@ export default function ChartPage() {
   const { symbol, interval, setSymbol, setInterval } = useMarketStore()
   const [liveCandle, setLiveCandle] = useState<LiveCandle | null>(null)
   const [active, setActive] = useState<Set<IndicatorName>>(new Set())
+  const [showFutures, setShowFutures] = useState(false)
 
   const symbolsQuery = useQuery({ queryKey: ['symbols'], queryFn: api.symbols })
   const candlesQuery = useQuery({
@@ -161,7 +164,18 @@ export default function ChartPage() {
             </button>
           ))}
         </div>
+        <button
+          onClick={() => setShowFutures((v) => !v)}
+          className={`rounded px-2 py-1 text-xs font-medium ${
+            showFutures
+              ? 'bg-amber-600 text-white'
+              : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+          }`}
+        >
+          Futures
+        </button>
       </div>
+      <MicroPanel symbol={symbol} />
       <div className="flex min-h-0 flex-1 gap-3">
         <div className="min-w-0 flex-1 rounded border border-zinc-800 bg-zinc-900/50 p-2">
           {candlesQuery.isLoading && (
@@ -192,6 +206,7 @@ export default function ChartPage() {
           <DepthPanel symbol={symbol} />
         </div>
       </div>
+      {showFutures && <FuturesPanel symbol={symbol} />}
     </div>
   )
 }

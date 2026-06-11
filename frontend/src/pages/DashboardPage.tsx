@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { api, type TickerSummary } from '../api/client'
+import { api, type Regime, type TickerSummary } from '../api/client'
 import CorrHeatmap from '../components/CorrHeatmap'
+import FundingExtremes from '../components/FundingExtremes'
 import { LiquidationFeed, WhaleFeed } from '../components/LiveFeeds'
 import { useMarketStore } from '../stores/market'
 import { useTopic } from '../ws/hooks'
@@ -32,7 +33,39 @@ function pctClass(v: number | null | undefined): string {
   return v >= 0 ? 'text-emerald-400' : 'text-red-400'
 }
 
-function Row({ t }: { t: TickerSummary }) {
+function RegimeBadge({ regime }: { regime: Regime | null | undefined }) {
+  if (!regime) return <span className="text-zinc-600">—</span>
+  const color =
+    regime.trend === 'Trending'
+      ? 'text-emerald-400'
+      : regime.trend === 'Mean-reverting'
+        ? 'text-blue-400'
+        : 'text-zinc-400'
+  return (
+    <span className="text-xs">
+      <span className={color}>{regime.trend}</span>
+      <span className="text-zinc-500"> · {regime.volatility}</span>
+      {regime.funding !== 'Unknown' && (
+        <span
+          className={
+            regime.funding === 'Balanced' ? 'text-zinc-500' : 'text-amber-400'
+          }
+        >
+          {' '}
+          · {regime.funding}
+        </span>
+      )}
+    </span>
+  )
+}
+
+function Row({
+  t,
+  regime,
+}: {
+  t: TickerSummary
+  regime: Regime | null | undefined
+}) {
   const setSymbol = useMarketStore((s) => s.setSymbol)
   return (
     <tr className="border-b border-zinc-800/60 hover:bg-zinc-800/40">
@@ -66,6 +99,9 @@ function Row({ t }: { t: TickerSummary }) {
       >
         {fmtPct(t.oi_change_24h_pct)}
       </td>
+      <td className="px-3 py-2">
+        <RegimeBadge regime={regime} />
+      </td>
     </tr>
   )
 }
@@ -82,6 +118,11 @@ export default function DashboardPage() {
     queryKey: ['ticker-summary'],
     queryFn: api.tickerSummary,
     refetchInterval: 30000,
+  })
+  const regimeQuery = useQuery({
+    queryKey: ['regime'],
+    queryFn: api.regime,
+    refetchInterval: 120_000,
   })
   const [live, setLive] = useState<Record<string, LiveTicker>>({})
   useTopic('tickers', (data) => {
@@ -129,19 +170,25 @@ export default function DashboardPage() {
                 <th className="px-3 py-2 text-right">24h Vol (quote)</th>
                 <th className="px-3 py-2 text-right">Funding</th>
                 <th className="px-3 py-2 text-right">OI Δ 24h</th>
+                <th className="px-3 py-2">Regime</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((t) => (
-                <Row key={t.symbol} t={t} />
+                <Row
+                  key={t.symbol}
+                  t={t}
+                  regime={regimeQuery.data?.regimes[t.symbol]}
+                />
               ))}
             </tbody>
           </table>
         </div>
       )}
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
+      <div className="mt-4 grid gap-4 md:grid-cols-3">
         <LiquidationFeed />
         <WhaleFeed />
+        <FundingExtremes />
       </div>
       <div className="mt-4">
         <CorrHeatmap />

@@ -97,6 +97,36 @@ export interface PairsResponse {
   spread_z: SeriesPoint[]
 }
 
+export interface Regime {
+  trend: string
+  volatility: string
+  funding: string
+  adx: number | null
+  hurst: number | null
+  vol_percentile: number | null
+  funding_percentile: number | null
+}
+
+export interface RegimeResponse {
+  interval: string
+  regimes: Record<string, Regime | null>
+}
+
+export interface FundingExtreme {
+  symbol: string
+  funding_rate: number
+  annualized_pct: number
+}
+
+export interface FundingExtremesResponse {
+  extremes: FundingExtreme[]
+}
+
+export interface LongShortResponse {
+  symbol: string
+  entries: { ts: string; ratio: number; long_pct: number; short_pct: number }[]
+}
+
 export const api = {
   candles: (symbol: string, interval: string, limit = 1000) =>
     getJson<CandlesResponse>('/candles', { symbol, interval, limit }),
@@ -120,6 +150,11 @@ export const api = {
     getJson<HurstResponse>('/analytics/stats/hurst', { symbol, interval }),
   correlation: (window = 90) =>
     getJson<CorrelationResponse>('/analytics/stats/correlation', { window }),
+  regime: () => getJson<RegimeResponse>('/analytics/regime'),
+  fundingExtremes: () =>
+    getJson<FundingExtremesResponse>('/analytics/funding-extremes'),
+  longShort: (symbol: string, limit = 500) =>
+    getJson<LongShortResponse>('/long-short', { symbol, limit }),
   pairs: (a: string, b: string, interval: string) =>
     getJson<PairsResponse>('/analytics/stats/pairs', {
       symbol_a: a,
