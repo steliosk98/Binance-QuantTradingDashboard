@@ -1,0 +1,53 @@
+<svg width="1200" height="260" viewBox="0 0 1200 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="0%" r="90%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.10"/>
+      <stop offset="55%" stop-color="#07090d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="tape" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2dd4bf"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#ef5350"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="260" fill="#07090d"/>
+  <rect width="1200" height="260" fill="url(#glow)"/>
+  <rect x="0.5" y="0.5" width="1199" height="259" stroke="#243044" stroke-width="1"/>
+
+  <!-- corner ticks -->
+  <path d="M14 26 V14 H26" stroke="#f59e0b" stroke-width="2"/>
+  <path d="M1186 26 V14 H1174" stroke="#f59e0b" stroke-width="2"/>
+  <path d="M14 234 V246 H26" stroke="#f59e0b" stroke-width="2"/>
+  <path d="M1186 234 V246 H1174" stroke="#f59e0b" stroke-width="2"/>
+
+  <!-- candlestick mark -->
+  <g transform="translate(72,72)">
+    <line x1="14" y1="0" x2="14" y2="116" stroke="#2dd4bf" stroke-width="3"/>
+    <rect x="4" y="26" width="20" height="44" rx="2" fill="#2dd4bf"/>
+    <line x1="52" y1="14" x2="52" y2="102" stroke="#ef5350" stroke-width="3"/>
+    <rect x="42" y="36" width="20" height="36" rx="2" fill="#ef5350"/>
+    <line x1="90" y1="6" x2="90" y2="96" stroke="#f59e0b" stroke-width="3"/>
+    <rect x="80" y="18" width="20" height="48" rx="2" fill="#f59e0b"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="220" y="128" font-family="'Space Grotesk','Segoe UI',Helvetica,Arial,sans-serif" font-weight="700" font-size="64" letter-spacing="-1">
+    <tspan fill="#e8edf4">CRYPTO</tspan><tspan fill="#f59e0b">QUANT</tspan>
+  </text>
+  <text x="224" y="166" font-family="'JetBrains Mono',ui-monospace,Menlo,monospace" font-size="17" letter-spacing="9" fill="#64748b">TERMINAL · QUANT RESEARCH PLATFORM</text>
+
+  <!-- fake tape -->
+  <g font-family="'JetBrains Mono',ui-monospace,Menlo,monospace" font-size="13">
+    <text x="222" y="212" fill="#94a3b8">BTC <tspan fill="#2dd4bf">▲ 63,191.66</tspan></text>
+    <text x="420" y="212" fill="#94a3b8">ETH <tspan fill="#2dd4bf">▲ 1,660.85</tspan></text>
+    <text x="600" y="212" fill="#94a3b8">SOL <tspan fill="#ef5350">▼ 65.540</tspan></text>
+    <text x="760" y="212" fill="#94a3b8">FUNDING <tspan fill="#f59e0b">+0.0025%</tspan></text>
+    <text x="980" y="212" fill="#94a3b8">REGIME <tspan fill="#2dd4bf">TRENDING</tspan></text>
+  </g>
+  <rect x="221" y="226" width="760" height="2" fill="url(#tape)" opacity="0.65"/>
+
+  <!-- status -->
+  <circle cx="1124" cy="206" r="5" fill="#2dd4bf"/>
+  <text x="1138" y="211" font-family="'JetBrains Mono',ui-monospace,Menlo,monospace" font-size="13" fill="#2dd4bf">LIVE</text>
+</svg>
