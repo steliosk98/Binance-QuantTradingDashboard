@@ -28,20 +28,35 @@ export default function Plot({
   testId?: string
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const lastSpecRef = useRef<string>('')
 
+  // Redraw only when the chart contents actually change. Live ticks make the
+  // parent re-render every second with fresh (but equal) data/layout object
+  // identities; an unconditional Plotly.react would wipe the hover tooltip
+  // out from under the user on each pass.
   useEffect(() => {
     if (!ref.current) return
-    const el = ref.current
+    const spec = JSON.stringify({ data, layout })
+    if (spec === lastSpecRef.current) return
+    lastSpecRef.current = spec
     void Plotly.react(
-      el,
+      ref.current,
       data,
       { ...DARK_LAYOUT, ...layout },
       { responsive: true, displayModeBar: false },
     )
-    return () => {
-      Plotly.purge(el)
-    }
   }, [data, layout])
+
+  // Destroy the chart only on unmount, not on every dependency change. Reset
+  // the spec guard so a remount (e.g. React StrictMode's double-mount in dev)
+  // redraws instead of skipping.
+  useEffect(() => {
+    const el = ref.current
+    return () => {
+      lastSpecRef.current = ''
+      if (el) Plotly.purge(el)
+    }
+  }, [])
 
   return <div ref={ref} data-testid={testId} className="h-full w-full" />
 }
