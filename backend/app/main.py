@@ -5,6 +5,7 @@ from app.api.analytics import router as analytics_router
 from app.api.backtests import router as backtests_router
 from app.api.health import router as health_router
 from app.api.market import router as market_router
+from app.api.paper import router as paper_router
 from app.api.ws import router as ws_router
 from app.core.config import get_settings
 
@@ -25,3 +26,4 @@ app.include_router(market_router)
 app.include_router(ws_router)
 app.include_router(analytics_router)
 app.include_router(backtests_router)
+app.include_router(paper_router)

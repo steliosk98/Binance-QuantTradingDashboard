@@ -221,7 +221,59 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   return resp.json() as Promise<T>
 }
 
+export interface PaperInstanceSummary {
+  id: string
+  created_at: string
+  name: string
+  strategy: string
+  symbol: string
+  interval: string
+  qty_usd: number
+  status: 'running' | 'stopped'
+  params: Record<string, number> | null
+  guards: Record<string, number> | null
+  position_qty: number
+  realized_pnl: number
+  halted_today: boolean
+}
+
+export interface PaperOrderOut {
+  id: string
+  ts: string
+  symbol: string
+  side: 'BUY' | 'SELL'
+  qty: number
+  price: number
+  status: string
+  signal: string | null
+  testnet_order_id: string | null
+}
+
+export interface PaperInstanceDetail extends PaperInstanceSummary {
+  state: Record<string, unknown> | null
+  orders: PaperOrderOut[]
+  equity: [string, number, number, number][]
+}
+
 export const api = {
+  paperInstances: () =>
+    getJson<{ instances: PaperInstanceSummary[] }>('/paper/instances'),
+  paperInstance: (id: string) =>
+    getJson<PaperInstanceDetail>(`/paper/instances/${id}`),
+  createPaperInstance: (body: {
+    name: string
+    strategy: string
+    symbol: string
+    interval: string
+    qty_usd: number
+    params: Record<string, number>
+    max_position_usd: number
+    max_daily_loss_usd: number
+  }) => postJson<PaperInstanceSummary>('/paper/instances', body),
+  stopPaperInstance: (id: string) =>
+    postJson<PaperInstanceSummary>(`/paper/instances/${id}/stop`, {}),
+  startPaperInstance: (id: string) =>
+    postJson<PaperInstanceSummary>(`/paper/instances/${id}/start`, {}),
   strategies: () => getJson<{ strategies: StrategySpec[] }>('/strategies'),
   createBacktest: (body: {
     strategy: string
