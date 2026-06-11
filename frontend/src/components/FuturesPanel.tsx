@@ -54,7 +54,7 @@ export default function FuturesPanel({ symbol }: { symbol: string }) {
                 x: funding.data.entries.map((e) => e.funding_time),
                 y: funding.data.entries.map((e) => e.rate * 100),
                 name: 'funding %',
-                line: { color: '#34d399' },
+                line: { color: '#2dd4bf' },
               },
             ]}
             layout={{ title: { text: 'Funding rate (%)' }, showlegend: false }}
@@ -74,7 +74,7 @@ export default function FuturesPanel({ symbol }: { symbol: string }) {
                 x: oi.data.entries.map((e) => e.ts),
                 y: oi.data.entries.map((e) => e.oi),
                 name: 'OI',
-                line: { color: '#60a5fa' },
+                line: { color: '#38bdf8' },
               },
             ]}
             layout={{ title: { text: 'Open interest' }, showlegend: false }}

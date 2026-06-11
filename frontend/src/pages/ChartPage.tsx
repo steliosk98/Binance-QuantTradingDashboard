@@ -52,7 +52,7 @@ export default function ChartPage() {
   const paneSeries: PaneSeries[] = []
   if (ind) {
     if (active.has('SMA 20'))
-      overlays.push({ id: 'sma20', color: '#60a5fa', data: ind.sma_20 })
+      overlays.push({ id: 'sma20', color: '#38bdf8', data: ind.sma_20 })
     if (active.has('SMA 50'))
       overlays.push({ id: 'sma50', color: '#f59e0b', data: ind.sma_50 })
     if (active.has('EMA 20'))
@@ -60,9 +60,9 @@ export default function ChartPage() {
     if (active.has('VWAP'))
       overlays.push({ id: 'vwap', color: '#f472b6', data: ind.vwap_session })
     if (active.has('BB')) {
-      overlays.push({ id: 'bbu', color: '#52525b', data: ind.bb_upper })
-      overlays.push({ id: 'bbm', color: '#71717a', data: ind.bb_middle })
-      overlays.push({ id: 'bbl', color: '#52525b', data: ind.bb_lower })
+      overlays.push({ id: 'bbu', color: '#38465e', data: ind.bb_upper })
+      overlays.push({ id: 'bbm', color: '#64748b', data: ind.bb_middle })
+      overlays.push({ id: 'bbl', color: '#38465e', data: ind.bb_lower })
     }
     let pane = 1
     if (active.has('RSI')) {
@@ -70,10 +70,10 @@ export default function ChartPage() {
       pane += 1
     }
     if (active.has('MACD')) {
-      paneSeries.push({ id: 'macd', color: '#34d399', data: ind.macd, pane })
+      paneSeries.push({ id: 'macd', color: '#2dd4bf', data: ind.macd, pane })
       paneSeries.push({
         id: 'macds',
-        color: '#f87171',
+        color: '#ef5350',
         data: ind.macd_signal,
         pane,
       })
@@ -123,7 +123,7 @@ export default function ChartPage() {
             setSymbol(e.target.value)
             setLiveCandle(null)
           }}
-          className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm"
+          className="rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
         >
           {symbols.map((s) => (
             <option key={s} value={s}>
@@ -141,7 +141,7 @@ export default function ChartPage() {
               }}
               className={`rounded px-2 py-1 text-xs font-medium ${
                 iv === interval
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-amber-400/15 text-amber-400'
                   : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
               }`}
             >
@@ -156,7 +156,7 @@ export default function ChartPage() {
               onClick={() => toggle(name)}
               className={`rounded px-2 py-1 text-xs font-medium ${
                 active.has(name)
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-sky-400/15 text-sky-400'
                   : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
               }`}
             >
@@ -168,7 +168,7 @@ export default function ChartPage() {
           onClick={() => setShowFutures((v) => !v)}
           className={`rounded px-2 py-1 text-xs font-medium ${
             showFutures
-              ? 'bg-amber-600 text-white'
+              ? 'bg-amber-400/15 text-amber-400'
               : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
           }`}
         >

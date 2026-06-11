@@ -86,7 +86,7 @@ export default function SettingsPage() {
                 value={watchlistText}
                 onChange={(e) => setWatchlistText(e.target.value)}
                 rows={2}
-                className="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+                className="w-full rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
               />
             </label>
             <div className="flex gap-3">
@@ -106,14 +106,14 @@ export default function SettingsPage() {
                     onChange={(e) =>
                       setForm({ ...form, [key]: Number(e.target.value) })
                     }
-                    className="w-36 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+                    className="w-36 rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
                   />
                 </label>
               ))}
             </div>
             <button
               onClick={() => void saveGeneral()}
-              className="w-fit rounded bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-500"
+              className="w-fit rounded bg-amber-500 px-4 py-1.5 text-sm font-semibold text-zinc-950 hover:bg-amber-400"
             >
               Save settings
             </button>
@@ -145,7 +145,7 @@ export default function SettingsPage() {
               aria-label="API key"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="w-64 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+              className="w-64 rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
             />
           </label>
           <label className="text-sm">
@@ -155,13 +155,13 @@ export default function SettingsPage() {
               aria-label="API secret"
               value={apiSecret}
               onChange={(e) => setApiSecret(e.target.value)}
-              className="w-64 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+              className="w-64 rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
             />
           </label>
           <button
             onClick={() => void saveKeys()}
             disabled={apiKey.length < 10 || apiSecret.length < 10}
-            className="rounded bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+            className="rounded bg-amber-500 px-4 py-1.5 text-sm font-semibold text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
           >
             Save keys
           </button>

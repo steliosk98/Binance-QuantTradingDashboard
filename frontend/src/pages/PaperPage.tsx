@@ -61,7 +61,7 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
           aria-label="Instance name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-36 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+          className="w-36 rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
         />
       </label>
       <label className="text-sm">
@@ -72,7 +72,7 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
             setStrategyKey(e.target.value)
             setParams({})
           }}
-          className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+          className="rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
         >
           {strategiesQuery.data?.strategies.map((s) => (
             <option key={s.key} value={s.key}>
@@ -86,7 +86,7 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
         <select
           value={symbol}
           onChange={(e) => setSymbol(e.target.value)}
-          className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+          className="rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
         >
           {(symbolsQuery.data?.watchlist ?? ['BTCUSDT']).map((s) => (
             <option key={s}>{s}</option>
@@ -98,7 +98,7 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
         <select
           value={interval}
           onChange={(e) => setInterval(e.target.value)}
-          className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+          className="rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
         >
           {['1m', '5m', '15m', '1h'].map((iv) => (
             <option key={iv}>{iv}</option>
@@ -121,7 +121,7 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
                 [p.name]: Number(e.target.value),
               }))
             }
-            className="w-24 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+            className="w-24 rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
           />
         </label>
       ))}
@@ -132,7 +132,7 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
           aria-label="Size USD"
           value={qtyUsd}
           onChange={(e) => setQtyUsd(Number(e.target.value))}
-          className="w-24 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+          className="w-24 rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
         />
       </label>
       <label className="text-sm">
@@ -142,7 +142,7 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
           aria-label="Max position USD"
           value={maxPos}
           onChange={(e) => setMaxPos(Number(e.target.value))}
-          className="w-24 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+          className="w-24 rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
         />
       </label>
       <label className="text-sm">
@@ -152,13 +152,13 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
           aria-label="Max daily loss USD"
           value={maxLoss}
           onChange={(e) => setMaxLoss(Number(e.target.value))}
-          className="w-24 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+          className="w-24 rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
         />
       </label>
       <button
         onClick={() => void create()}
         disabled={busy}
-        className="rounded bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+        className="rounded bg-amber-500 px-4 py-1.5 text-sm font-semibold text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
       >
         Create instance
       </button>
@@ -245,7 +245,7 @@ function InstanceDetail({ detail }: { detail: PaperInstanceDetail }) {
                 x: detail.equity.map((e) => e[0]),
                 y: detail.equity.map((e) => e[1]),
                 name: 'equity (USD)',
-                line: { color: '#34d399' },
+                line: { color: '#2dd4bf' },
               },
             ]}
             layout={{ title: { text: `${detail.name} — paper equity` } }}

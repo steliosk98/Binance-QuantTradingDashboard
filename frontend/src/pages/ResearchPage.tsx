@@ -59,7 +59,7 @@ function DistributionTab({
                   type: 'bar',
                   x: d.histogram.edges.slice(0, -1),
                   y: d.histogram.counts,
-                  marker: { color: '#34d399' },
+                  marker: { color: '#2dd4bf' },
                   name: 'returns',
                 },
               ]}
@@ -79,7 +79,7 @@ function DistributionTab({
                   mode: 'markers',
                   x: d.qq.theoretical,
                   y: d.qq.sample,
-                  marker: { size: 3, color: '#60a5fa' },
+                  marker: { size: 3, color: '#38bdf8' },
                   name: 'QQ',
                 },
                 {
@@ -87,7 +87,7 @@ function DistributionTab({
                   mode: 'lines',
                   x: d.qq.theoretical,
                   y: d.qq.theoretical.map((t) => d.mean + d.std * t),
-                  line: { color: '#f87171', width: 1 },
+                  line: { color: '#ef5350', width: 1 },
                   name: 'normal',
                 },
               ]}
@@ -138,14 +138,14 @@ function VolatilityTab({
                 mode: 'lines',
                 ...xy(d.close_to_close),
                 name: 'close-to-close',
-                line: { color: '#34d399' },
+                line: { color: '#2dd4bf' },
               },
               {
                 type: 'scattergl',
                 mode: 'lines',
                 ...xy(d.parkinson),
                 name: 'Parkinson',
-                line: { color: '#60a5fa' },
+                line: { color: '#38bdf8' },
               },
               {
                 type: 'scattergl',
@@ -201,7 +201,7 @@ function HurstTab({ symbol, interval }: { symbol: string; interval: string }) {
                     x1: 1,
                     y0: 0.5,
                     y1: 0.5,
-                    line: { color: '#52525b', dash: 'dot' },
+                    line: { color: '#38465e', dash: 'dot' },
                   },
                 ],
               }}
@@ -216,7 +216,7 @@ function HurstTab({ symbol, interval }: { symbol: string; interval: string }) {
                   mode: 'lines',
                   ...xy(d.zscore),
                   name: 'price z-score',
-                  line: { color: '#34d399' },
+                  line: { color: '#2dd4bf' },
                 },
               ]}
               layout={{
@@ -257,7 +257,7 @@ function PairsTab({
             aria-label={i === 0 ? 'Symbol A' : 'Symbol B'}
             value={val as string}
             onChange={(e) => (set as (v: string) => void)(e.target.value)}
-            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm"
+            className="rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
           >
             {symbols.map((s) => (
               <option key={s}>{s}</option>
@@ -303,7 +303,7 @@ function PairsTab({
                     mode: 'lines',
                     ...xy(d.spread_z),
                     name: 'spread z-score',
-                    line: { color: '#34d399' },
+                    line: { color: '#2dd4bf' },
                   },
                 ]}
                 layout={{ title: { text: `${a} / ${b} spread z-score` } }}
@@ -334,7 +334,7 @@ export default function ResearchPage() {
               onClick={() => setTab(t)}
               className={`rounded px-3 py-1 text-sm ${
                 t === tab
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-amber-400/15 text-amber-400'
                   : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
               }`}
             >
@@ -366,7 +366,7 @@ function SymbolPicker() {
       aria-label="Symbol"
       value={symbol}
       onChange={(e) => setSymbol(e.target.value)}
-      className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm"
+      className="rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
     >
       {symbols.map((s) => (
         <option key={s}>{s}</option>

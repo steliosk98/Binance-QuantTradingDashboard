@@ -68,22 +68,23 @@ describe('DashboardPage', () => {
   it('renders the watchlist table from the API', async () => {
     vi.stubGlobal('fetch', vi.fn(routedFetch(ROUTES)))
     renderWithProviders(<DashboardPage />)
+    // Symbols render as base asset + /USDT suffix in the terminal layout
     await waitFor(() =>
-      expect(screen.getAllByText('BTCUSDT').length).toBeGreaterThan(0),
+      expect(screen.getAllByText('BTC').length).toBeGreaterThan(0),
     )
-    expect(screen.getByText('+2.50%')).toBeInTheDocument()
+    expect(screen.getAllByText('+2.50%').length).toBeGreaterThan(0)
     // Missing data renders as em-dashes, not a crash
-    expect(screen.getAllByText('DOGEUSDT').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('DOGE').length).toBeGreaterThan(0)
   })
 
   it('shows regime labels per symbol', async () => {
     vi.stubGlobal('fetch', vi.fn(routedFetch(ROUTES)))
     renderWithProviders(<DashboardPage />)
     await waitFor(() =>
-      expect(screen.getByText('Trending')).toBeInTheDocument(),
+      expect(screen.getAllByText('Trending').length).toBeGreaterThan(0),
     )
-    expect(screen.getByText(/High Vol/)).toBeInTheDocument()
-    expect(screen.getByText(/Crowded Longs/)).toBeInTheDocument()
+    expect(screen.getAllByText(/High Vol/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Crowded Longs/).length).toBeGreaterThan(0)
   })
 
   it('ranks funding extremes by magnitude', async () => {
@@ -97,6 +98,6 @@ describe('DashboardPage', () => {
     const widget = screen.getByTestId('funding-extremes')
     const text = widget.textContent ?? ''
     // DOGE (|-0.002|) listed before BTC (0.0001)
-    expect(text.indexOf('DOGEUSDT')).toBeLessThan(text.indexOf('BTCUSDT'))
+    expect(text.indexOf('DOGE')).toBeLessThan(text.indexOf('BTC'))
   })
 })

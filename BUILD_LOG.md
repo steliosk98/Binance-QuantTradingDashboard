@@ -395,6 +395,38 @@ in this environment (`.env.local` absent). All deployment artifacts are ready
 step-by-step incl. EU-region guidance for Binance geo-blocks). To deploy: provide a Railway
 token (or Fly credentials), follow docs/DEPLOY.md — ≈15 minutes — then record the URL here.
 
+## Design overhaul — CryptoQuant Terminal (2026-06-11, post-v1.0.0)
+
+### Built
+- Full visual redesign to a "Bloomberg in the modern era" mission-control terminal, driven by the
+  UI/UX Pro Max design system (data-dense dashboard style, terminal amber + status colors).
+- Design tokens (Tailwind v4 `@theme`): zinc scale remapped to a blue-black terminal ramp
+  (#07090d → #e8edf4) so every existing utility class adopted the palette at once; bullish teal
+  (#2dd4bf, colorblind-safer than green), bearish red (#ef5350), terminal amber (#f59e0b) as the
+  single primary accent. Typography: Space Grotesk (display/UI) + JetBrains Mono (all data,
+  tabular numerals globally).
+- Shell: sticky command bar (CRYPTOQUANT TERMINAL wordmark, mono uppercase nav, UTC clock,
+  LIVE/SYNC/OFFLINE indicator with pulse) + streaming ticker tape of live watchlist prices
+  (CSS marquee, pauses on hover, seamless loop).
+- Panel system: uniform bordered panels with uppercase mono microlabel headers + live-status
+  dots; staggered entrance animation (40 ms steps).
+- Dashboard → mission control: KPI command strip (BTC, total vol, breadth, trending count, BTC
+  regime), dense watchlist with per-row live sparklines (1h tape built from ticker stream),
+  green/red price-flash on tick, regime chips, funding-extremes magnitude bars, correlation
+  heatmap recolored to red→surface→teal diverging scale; responsive column hiding (md/lg/xl).
+- Charts: lightweight-charts + Plotly themed (mono axis font, #161d29 grids, teal/red candles,
+  terminal hover labels, shared colorway).
+- Motion: flash-up/flash-down, pulse dots, panel rise, ticker scroll — all 150–600 ms,
+  transform/opacity only, fully disabled under prefers-reduced-motion. Amber focus-visible
+  outlines, thin terminal scrollbars.
+
+### Verification
+- eslint / tsc / prettier clean; 31 unit tests green (3 dashboard tests updated for the new
+  symbol presentation); full Playwright E2E 5/5 green against the rebuilt stack.
+- 375 px mobile: horizontal overflow eliminated (scrollable nav, clipped main, constrained
+  heatmap) — verified via DOM scan in Playwright.
+- Screenshots: docs/screenshots/design-*.png (login, dashboard, chart, backtest, mobile).
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH
