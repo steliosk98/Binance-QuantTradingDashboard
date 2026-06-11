@@ -337,6 +337,40 @@ Agent memory across sessions. Append-only; one section per stage.
   key status; WS reconnects authenticated → "live" after login ✓.
   Screenshots: `docs/screenshots/stage8-*.png`.
 
+## Stage 9 — Hardening, E2E, deployment (2026-06-11)
+
+### Built
+- Structured JSON logging (`app/core/logging.py`): request-ID middleware (X-Request-ID echoed,
+  contextvar-propagated into every log line), duration logging, `JSON_LOGS` env switch; optional
+  Sentry init via `SENTRY_DSN`.
+- Migration 0006: TimescaleDB compression on `candles` (segment by symbol+interval, compress
+  after 30 days) + 90-day retention on `liquidations`; policies degrade gracefully on plain PG.
+- Production Dockerfiles: backend multi-stage (uv → slim, non-root uid 10001, runs migrations on
+  boot, PORT-aware) and frontend (build → nginx-unprivileged with /api + /ws proxy template).
+- Playwright E2E (`frontend/e2e/app.spec.ts`): login (wrong + right password) → dashboard
+  watchlist data → chart + RSI pane → run backtest → full results → saved-backtest reload.
+  Hermetic: `scripts/seed_e2e.py` seeds deterministic synthetic candles (Binance 451-blocks some
+  CI runners, so E2E never touches the network). New CI `e2e` job: compose up → migrate → seed →
+  Playwright (chromium).
+- `railway.json` + `docs/DEPLOY.md` (Railway primary, EU region per geo-block risk; Fly.io
+  alternative; full env table; self-host notes). README finalized: architecture diagram, env
+  table, quick start, screenshots.
+
+### Verification (acceptance criteria)
+- Backend 124 + frontend 31 unit/integration tests green; ruff/mypy/eslint/tsc clean.
+- **E2E: 5/5 passed locally against the compose stack (17 s)**; same suite wired into CI.
+- Prod images build cleanly (`Dockerfile.prod` × 2). JSON logging emits structured lines with
+  request IDs (verified in container). Compression policy registered
+  (timescaledb_information.jobs: policy_compression on candles) ✓.
+- Local smoke of the "deployed" stack: /health 200, authed candles endpoint 200.
+
+### Known issues / blockers
+- **Cloud deploy not executed: no RAILWAY_TOKEN / Fly credentials in this environment**
+  (no `.env.local`; run instructions allow degraded mode + documenting). Everything needed to
+  deploy is in the repo (`railway.json`, prod Dockerfiles, `docs/DEPLOY.md` step-by-step). Once a
+  Railway/Fly account token is provided: follow docs/DEPLOY.md §Railway (≈15 min), smoke-test
+  `/health`, then record the URL here.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH
