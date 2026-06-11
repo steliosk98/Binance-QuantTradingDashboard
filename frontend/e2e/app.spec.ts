@@ -28,10 +28,10 @@ test('login rejects a wrong password', async ({ page }) => {
 test('login → dashboard shows watchlist data', async ({ page }) => {
   await login(page)
   await page.waitForSelector('table tbody tr', { timeout: 30000 })
-  const btcRow = page.locator('tbody tr', { hasText: 'BTCUSDT' })
+  const btcRow = page.locator('tbody tr', { hasText: 'BTC' }).first()
   await expect(btcRow).toBeVisible()
   // Price cell populated (not the em-dash placeholder)
-  await expect(btcRow.locator('td').nth(1)).not.toHaveText('—')
+  await expect(btcRow.locator('td').nth(2)).not.toHaveText('—')
 })
 
 test('chart renders candles and an indicator overlay', async ({ page }) => {

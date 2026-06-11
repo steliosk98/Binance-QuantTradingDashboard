@@ -1,27 +1,9 @@
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
+import TickerTape from './TickerTape'
 import { useWsStatus } from '../ws/hooks'
-
-const STATUS_STYLES = {
-  open: { dot: 'bg-emerald-400', label: 'live' },
-  connecting: { dot: 'bg-amber-400 animate-pulse', label: 'connecting' },
-  closed: { dot: 'bg-red-400', label: 'offline' },
-} as const
-
-function WsIndicator() {
-  const status = useWsStatus()
-  const s = STATUS_STYLES[status]
-  return (
-    <span
-      className="ml-auto flex items-center gap-1.5 text-xs text-zinc-400"
-      data-testid="ws-status"
-    >
-      <span className={`h-2 w-2 rounded-full ${s.dot}`} />
-      {s.label}
-    </span>
-  )
-}
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard' },
@@ -32,6 +14,50 @@ const NAV_ITEMS = [
   { to: '/portfolio', label: 'Portfolio' },
   { to: '/settings', label: 'Settings' },
 ]
+
+const STATUS_STYLES = {
+  open: {
+    dot: 'animate-pulse-dot bg-emerald-400',
+    label: 'LIVE',
+    text: 'text-emerald-400',
+  },
+  connecting: {
+    dot: 'animate-pulse bg-amber-400',
+    label: 'SYNC',
+    text: 'text-amber-400',
+  },
+  closed: { dot: 'bg-red-500', label: 'OFFLINE', text: 'text-red-400' },
+} as const
+
+function WsIndicator() {
+  const status = useWsStatus()
+  const s = STATUS_STYLES[status]
+  return (
+    <span
+      className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.12em]"
+      data-testid="ws-status"
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+      <span className={s.text}>{s.label}</span>
+    </span>
+  )
+}
+
+function UtcClock() {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [])
+  return (
+    <time
+      className="hidden font-mono text-[10px] tracking-[0.12em] text-zinc-500 tabular-nums md:block"
+      dateTime={now.toISOString()}
+    >
+      {now.toISOString().slice(11, 19)} UTC
+    </time>
+  )
+}
 
 export default function Layout() {
   const portfolioStatus = useQuery({
@@ -45,35 +71,44 @@ export default function Layout() {
   )
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-zinc-800 bg-zinc-900">
-        <nav className="mx-auto flex max-w-7xl items-center gap-1 px-4 py-2">
-          <span className="mr-6 text-lg font-bold text-emerald-400">
-            CryptoQuant
-          </span>
+      <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur">
+        <nav className="flex items-center gap-1 overflow-x-auto px-4 py-2 whitespace-nowrap">
+          <NavLink to="/" className="mr-5 flex items-baseline gap-1.5">
+            <span className="font-display text-base font-bold tracking-tight text-zinc-100">
+              CRYPTO<span className="text-amber-400">QUANT</span>
+            </span>
+            <span className="hidden font-mono text-[9px] tracking-[0.2em] text-zinc-600 sm:block">
+              TERMINAL
+            </span>
+          </NavLink>
           {items.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.to === '/'}
               className={({ isActive }) =>
-                `rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                `cursor-pointer rounded-sm px-2.5 py-1 font-mono text-[11px] tracking-[0.08em] uppercase transition-colors duration-150 ${
                   isActive
-                    ? 'bg-zinc-800 text-emerald-400'
-                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'
+                    ? 'bg-amber-400/10 text-amber-400'
+                    : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200'
                 }`
               }
             >
               {item.label}
             </NavLink>
           ))}
-          <WsIndicator />
+          <div className="ml-auto flex items-center gap-4">
+            <UtcClock />
+            <WsIndicator />
+          </div>
         </nav>
+        <TickerTape />
       </header>
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
+      <main className="w-full min-w-0 flex-1 overflow-x-clip px-4 py-4 2xl:px-6">
         <Outlet />
       </main>
-      <footer className="border-t border-zinc-800 px-4 py-3 text-center text-xs text-zinc-500">
-        Research tool. Not financial advice. No live trading.
+      <footer className="border-t border-zinc-800 px-4 py-2 text-center font-mono text-[10px] tracking-[0.1em] text-zinc-600 uppercase">
+        Research tool · Not financial advice · No live trading
       </footer>
     </div>
   )

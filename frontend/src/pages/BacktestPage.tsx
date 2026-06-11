@@ -101,7 +101,7 @@ function EquityChart({ detail }: { detail: BacktestDetail }) {
             x,
             y: equity.map((p) => p[1]),
             name: 'equity',
-            line: { color: '#34d399' },
+            line: { color: '#2dd4bf' },
           },
           {
             type: 'scattergl',
@@ -111,8 +111,8 @@ function EquityChart({ detail }: { detail: BacktestDetail }) {
             name: 'drawdown %',
             yaxis: 'y2',
             fill: 'tozeroy',
-            line: { color: '#f87171', width: 1 },
-            fillcolor: 'rgba(248,113,113,0.15)',
+            line: { color: '#ef5350', width: 1 },
+            fillcolor: 'rgba(239,83,80,0.12)',
           },
         ]}
         layout={{
@@ -268,7 +268,7 @@ function TradesTable({ detail }: { detail: BacktestDetail }) {
 }
 
 function CompareChart({ details }: { details: BacktestDetail[] }) {
-  const colors = ['#34d399', '#60a5fa', '#f59e0b']
+  const colors = ['#2dd4bf', '#38bdf8', '#f59e0b']
   return (
     <div className="h-80 rounded border border-zinc-800 p-1">
       <Plot
@@ -369,7 +369,7 @@ export default function BacktestPage() {
               setStrategyKey(e.target.value)
               setParams({})
             }}
-            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+            className="rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
           >
             {strategiesQuery.data?.strategies.map((s) => (
               <option key={s.key} value={s.key}>
@@ -383,7 +383,7 @@ export default function BacktestPage() {
           <select
             value={symbol}
             onChange={(e) => setSymbol(e.target.value)}
-            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+            className="rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
           >
             {symbols.map((s) => (
               <option key={s}>{s}</option>
@@ -395,7 +395,7 @@ export default function BacktestPage() {
           <select
             value={interval}
             onChange={(e) => setInterval(e.target.value)}
-            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+            className="rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
           >
             {['1m', '5m', '15m', '1h', '4h', '1d'].map((iv) => (
               <option key={iv}>{iv}</option>
@@ -418,7 +418,7 @@ export default function BacktestPage() {
                   [p.name]: Number(e.target.value),
                 }))
               }
-              className="w-24 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+              className="w-24 rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
             />
           </label>
         ))}
@@ -433,7 +433,7 @@ export default function BacktestPage() {
         <button
           onClick={() => void run()}
           disabled={submitting || !spec}
-          className="rounded bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+          className="rounded bg-amber-500 px-4 py-1.5 text-sm font-semibold text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
         >
           {submitting ? 'Submitting…' : 'Run backtest'}
         </button>

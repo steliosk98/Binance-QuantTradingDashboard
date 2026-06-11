@@ -4,12 +4,18 @@ import Plotly from 'plotly.js-dist-min'
 const DARK_LAYOUT: Partial<Plotly.Layout> = {
   paper_bgcolor: 'transparent',
   plot_bgcolor: 'transparent',
-  font: { color: '#a1a1aa', size: 11 },
+  font: { color: '#94a3b8', size: 10, family: "'JetBrains Mono', monospace" },
   margin: { t: 36, r: 16, b: 40, l: 48 },
-  xaxis: { gridcolor: '#27272a', zerolinecolor: '#3f3f46' },
-  yaxis: { gridcolor: '#27272a', zerolinecolor: '#3f3f46' },
+  xaxis: { gridcolor: '#161d29', zerolinecolor: '#243044' },
+  yaxis: { gridcolor: '#161d29', zerolinecolor: '#243044' },
   showlegend: true,
   legend: { orientation: 'h', y: 1.12 },
+  colorway: ['#2dd4bf', '#38bdf8', '#f59e0b', '#a78bfa', '#ef5350', '#f472b6'],
+  hoverlabel: {
+    bgcolor: '#161d29',
+    bordercolor: '#243044',
+    font: { color: '#e8edf4', family: "'JetBrains Mono', monospace", size: 11 },
+  },
 }
 
 export default function Plot({

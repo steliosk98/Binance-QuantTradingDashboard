@@ -48,9 +48,9 @@ export default function MicroPanel({ symbol }: { symbol: string }) {
   })
 
   const cells: [string, number[], string, number | undefined][] = [
-    ['Imbalance (5)', imb5, '#60a5fa', 0],
+    ['Imbalance (5)', imb5, '#38bdf8', 0],
     ['Imbalance (20)', imb20, '#a78bfa', 0],
-    ['CVD 1m', cvd1, '#34d399', 0],
+    ['CVD 1m', cvd1, '#2dd4bf', 0],
     ['CVD 5m', cvd5, '#f59e0b', 0],
   ]
 

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
+import Panel from './Panel'
 import Plot from './Plot'
 
 export default function CorrHeatmap() {
@@ -8,18 +9,15 @@ export default function CorrHeatmap() {
     queryFn: () => api.correlation(90),
   })
   return (
-    <div className="rounded border border-zinc-800" data-testid="corr-heatmap">
-      <div className="border-b border-zinc-800 px-3 py-2 text-sm font-medium">
-        90-day correlation (daily log returns)
-      </div>
-      <div className="h-96 p-2">
+    <Panel title="90-Day Correlation · Daily Log Returns" testId="corr-heatmap">
+      <div className="h-80 min-w-0 overflow-hidden p-2">
         {q.isLoading && (
-          <p className="p-3 text-zinc-400" role="status">
+          <p className="p-3 font-mono text-xs text-zinc-600" role="status">
             Computing…
           </p>
         )}
         {q.isError && (
-          <p className="p-3 text-red-400" role="alert">
+          <p className="p-3 font-mono text-xs text-red-400" role="alert">
             {String(q.error)}
           </p>
         )}
@@ -34,8 +32,11 @@ export default function CorrHeatmap() {
                 z: q.data.matrix,
                 zmin: -1,
                 zmax: 1,
-                colorscale: 'RdBu',
-                reversescale: true,
+                colorscale: [
+                  [0, '#ef5350'],
+                  [0.5, '#0c1017'],
+                  [1, '#2dd4bf'],
+                ],
               },
             ]}
             layout={{
@@ -45,6 +46,6 @@ export default function CorrHeatmap() {
           />
         )}
       </div>
-    </div>
+    </Panel>
   )
 }

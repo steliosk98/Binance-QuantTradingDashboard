@@ -3,7 +3,7 @@ export default function Sparkline({
   values,
   width = 120,
   height = 28,
-  color = '#34d399',
+  color = '#2dd4bf',
   baseline,
   testId,
 }: {

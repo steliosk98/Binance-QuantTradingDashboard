@@ -66,21 +66,23 @@ export default function CandleChart({
     const chart = createChart(containerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: '#a1a1aa',
+        textColor: '#64748b',
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 10,
       },
       grid: {
-        vertLines: { color: '#27272a' },
-        horzLines: { color: '#27272a' },
+        vertLines: { color: '#161d29' },
+        horzLines: { color: '#161d29' },
       },
       timeScale: { timeVisible: true, secondsVisible: false },
       autoSize: true,
     })
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#34d399',
-      downColor: '#f87171',
+      upColor: '#2dd4bf',
+      downColor: '#ef5350',
       borderVisible: false,
-      wickUpColor: '#34d399',
-      wickDownColor: '#f87171',
+      wickUpColor: '#2dd4bf',
+      wickDownColor: '#ef5350',
     })
     const volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: 'volume' },
@@ -155,7 +157,7 @@ export default function CandleChart({
       candles.map((c) => ({
         time: toTs(c.open_time),
         value: c.volume,
-        color: c.close >= c.open ? '#34d39955' : '#f8717155',
+        color: c.close >= c.open ? '#2dd4bf40' : '#ef535040',
       })),
     )
     chartRef.current?.timeScale().fitContent()
@@ -175,7 +177,7 @@ export default function CandleChart({
     volumeSeriesRef.current.update({
       time,
       value: liveCandle.volume,
-      color: liveCandle.close >= liveCandle.open ? '#34d39955' : '#f8717155',
+      color: liveCandle.close >= liveCandle.open ? '#2dd4bf40' : '#ef535040',
     })
   }, [liveCandle])
 

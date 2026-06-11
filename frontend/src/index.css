@@ -1,9 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
+
+@theme {
+  /* ── CryptoQuant Terminal — Bloomberg-modern palette ─────────────
+     Remap the zinc scale to a blue-black terminal ramp so every
+     existing utility class adopts the system automatically. */
+  --color-zinc-950: #07090d; /* void — page background */
+  --color-zinc-900: #0c1017; /* panel surface */
+  --color-zinc-800: #161d29; /* raised surface / borders strong */
+  --color-zinc-700: #243044; /* interactive borders */
+  --color-zinc-600: #38465e; /* disabled ink */
+  --color-zinc-500: #64748b; /* muted ink */
+  --color-zinc-400: #94a3b8; /* secondary ink */
+  --color-zinc-300: #cbd5e1; /* body ink */
+  --color-zinc-100: #e8edf4; /* primary ink */
+
+  /* Bullish teal (colorblind-safer than pure green) */
+  --color-emerald-400: #2dd4bf;
+  --color-emerald-500: #14b8a6;
+  --color-emerald-600: #0d9488;
+
+  /* Bearish red */
+  --color-red-400: #f87171;
+  --color-red-500: #ef5350;
+  --color-red-600: #dc2626;
+
+  /* Terminal amber — primary accent, CTAs, focus */
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+
+  --animate-flash-up: flash-up 0.6s ease-out;
+  --animate-flash-down: flash-down 0.6s ease-out;
+  --animate-rise: rise 0.35s ease-out both;
+  --animate-ticker: ticker 45s linear infinite;
+  --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
+}
 
 :root {
   color-scheme: dark;
 }
 
 body {
-  @apply bg-zinc-950 text-zinc-100 antialiased;
+  @apply bg-zinc-950 text-zinc-300 antialiased;
+  background-image:
+    radial-gradient(
+      ellipse 80% 50% at 50% -20%,
+      rgba(245, 158, 11, 0.04),
+      transparent
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 90% 110%,
+      rgba(45, 212, 191, 0.03),
+      transparent
+    );
+  font-feature-settings: 'tnum';
+}
+
+h1,
+h2,
+h3 {
+  @apply font-display tracking-tight text-zinc-100;
+}
+
+/* Tabular numerals everywhere data lives */
+.tabular-nums,
+table,
+input[type='number'] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Terminal scrollbars ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #243044 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #243044;
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ── Focus visibility (keyboard nav) ── */
+:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 1px;
+}
+
+/* ── Keyframes ── */
+@keyframes flash-up {
+  0% {
+    background-color: rgba(45, 212, 191, 0.25);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+@keyframes flash-down {
+  0% {
+    background-color: rgba(239, 83, 80, 0.25);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.5);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 0 4px rgba(45, 212, 191, 0);
+  }
+}
+
+/* Staggered panel entrance */
+.panel-rise {
+  animation: rise 0.35s ease-out both;
+}
+.panel-rise:nth-child(2) {
+  animation-delay: 40ms;
+}
+.panel-rise:nth-child(3) {
+  animation-delay: 80ms;
+}
+.panel-rise:nth-child(4) {
+  animation-delay: 120ms;
+}
+.panel-rise:nth-child(5) {
+  animation-delay: 160ms;
+}
+
+.ticker-track {
+  animation: ticker 45s linear infinite;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track,
+  .panel-rise,
+  [class*='animate-'] {
+    animation: none !important;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }
