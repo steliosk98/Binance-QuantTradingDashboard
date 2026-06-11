@@ -127,7 +127,115 @@ export interface LongShortResponse {
   entries: { ts: string; ratio: number; long_pct: number; short_pct: number }[]
 }
 
+export interface StrategyParam {
+  name: string
+  label: string
+  type: 'int' | 'float'
+  default: number
+  min: number
+  max: number
+  step: number
+}
+
+export interface StrategySpec {
+  key: string
+  name: string
+  description: string
+  needs_funding: boolean
+  params: StrategyParam[]
+}
+
+export interface BacktestMetrics {
+  total_return: number
+  annualized_return: number | null
+  sharpe: number | null
+  sortino: number | null
+  calmar: number | null
+  max_drawdown: number
+  win_rate: number | null
+  profit_factor: number | null
+  exposure: number
+  turnover: number
+  n_trades: number
+  avg_trade_pnl_pct: number | null
+  bars: number
+}
+
+export interface BacktestTrade {
+  entry_time: string
+  exit_time: string
+  direction: string
+  entry_price: number
+  exit_price: number
+  pnl_pct: number
+  bars: number
+}
+
+export interface WalkForwardWindow {
+  train: [string, string]
+  test: [string, string]
+  best_params: Record<string, number>
+  in_sample: BacktestMetrics
+  out_of_sample: BacktestMetrics
+}
+
+export interface BacktestDetail {
+  id: string
+  created_at: string
+  strategy: string
+  symbol: string
+  interval: string
+  status: 'pending' | 'running' | 'done' | 'error'
+  error: string | null
+  params: Record<string, number> | null
+  metrics: BacktestMetrics | null
+  equity: [string, number, number][] | null
+  trades: BacktestTrade[] | null
+  walk_forward: {
+    windows: WalkForwardWindow[]
+    oos_equity: [string, number][]
+    oos_metrics: BacktestMetrics
+  } | null
+}
+
+export interface BacktestListEntry {
+  id: string
+  created_at: string
+  strategy: string
+  symbol: string
+  interval: string
+  status: string
+  params: Record<string, number> | null
+  metrics: BacktestMetrics | null
+}
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const resp = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!resp.ok) {
+    throw new Error(`POST ${path} failed: ${resp.status}`)
+  }
+  return resp.json() as Promise<T>
+}
+
 export const api = {
+  strategies: () => getJson<{ strategies: StrategySpec[] }>('/strategies'),
+  createBacktest: (body: {
+    strategy: string
+    symbol: string
+    interval: string
+    params: Record<string, number>
+    fee_bps?: number
+    slippage_bps?: number
+    walk_forward?: boolean
+    n_windows?: number
+  }) => postJson<{ id: string; status: string }>('/backtests', body),
+  getBacktest: (id: string) => getJson<BacktestDetail>(`/backtests/${id}`),
+  listBacktests: () =>
+    getJson<{ backtests: BacktestListEntry[] }>('/backtests'),
   candles: (symbol: string, interval: string, limit = 1000) =>
     getJson<CandlesResponse>('/candles', { symbol, interval, limit }),
   symbols: () => getJson<SymbolsResponse>('/symbols'),

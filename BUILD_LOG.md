@@ -225,6 +225,44 @@ Agent memory across sessions. Append-only; one section per stage.
   micro-panel draws 4 live sparklines; futures panel renders funding/OI/LSR charts.
   Screenshots: `docs/screenshots/stage5-*.png`.
 
+## Stage 6 — Backtesting engine + UI (2026-06-11)
+
+### Built
+- `app/backtest/engine.py`: vectorized long/short engine — target positions decided on close,
+  shifted one bar (no look-ahead); fee+slippage charged on |Δposition|; equity/drawdown/round-trip
+  trade extraction; metrics: total/annualized return, Sharpe, Sortino, Calmar, max DD, win rate,
+  profit factor, exposure, turnover, avg trade PnL.
+- `app/backtest/strategies.py`: 6 strategies (§5.2) with declared param schemas + grid values:
+  SMA crossover, RSI MR, Bollinger MR, Donchian breakout w/ trailing ATR stop, Z-score MR,
+  Funding contrarian (joins funding series onto candles).
+- `app/backtest/walkforward.py`: contiguous train/test windows, grid search on train (best
+  Sharpe), stitched OOS equity, per-window IS-vs-OOS metrics (overfitting visible by design).
+- API: `GET /strategies` (schemas for UI forms), `POST /api/v1/backtests` (202 + asyncio
+  background task, compute in `asyncio.to_thread`), `GET /backtests[/{id}]`; migration 0003
+`backtests` table (status/params/metrics/equity/trades/walkforward JSON).
+- Backtest page: strategy picker → auto-generated param form → run → poll → metrics cards,
+  equity curve with drawdown shading (dual axis), monthly returns heatmap, walk-forward IS/OOS
+  table + stitched OOS curve, trade list, saved backtests with reload + up-to-3 comparison.
+
+### Key decisions / deviations
+- **vectorbt not used** — hand-rolled vectorized engine (spec's prescribed fallback); interface
+  doesn't leak the choice.
+- Equity curve stored inline as JSON (`equity_json`) rather than a separate ref — small payloads
+  (≤20k bars), single-tenant.
+- Async runs use in-process asyncio tasks (single-tenant; no Celery per spec §2.1).
+
+### Verification (acceptance criteria)
+- Backend **107 tests** green. Engine: buy-and-hold == price ratio net of costs; perfect
+  foresight on sine wave → 4.9x equity; no-look-ahead jump test; short-side math; costs ==
+  (1-c)^turnover on flat prices; trade extraction; hand-computed Sharpe/exposure/maxDD;
+  determinism (identical runs byte-equal); WF window tiling + grid product + IS/OOS reporting.
+  Frontend **22 tests** green (schema-driven form, run→poll→results, saved list).
+- **SMA crossover BTCUSDT 1h × 2 years (17,521 bars, 390 trades): done in 0.76 s** (<10 s bar) ✓.
+- Walk-forward (4 windows) renders IS vs OOS side by side (e.g. window 1: IS Sharpe 1.92 vs OOS
+  0.49 — overfitting made visible) ✓.
+- Browser (Playwright): full results page renders; saved backtests reload after page refresh;
+  2-curve comparison chart works. Screenshot: `docs/screenshots/stage6-backtest-results.png`.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH
