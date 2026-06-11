@@ -371,6 +371,30 @@ Agent memory across sessions. Append-only; one section per stage.
   Railway/Fly account token is provided: follow docs/DEPLOY.md §Railway (≈15 min), smoke-test
   `/health`, then record the URL here.
 
+---
+
+## FINAL SUMMARY (2026-06-11, v1.0.0)
+
+All ten stages (0–9) built, tested, merged via PRs #1–#10, CI green on main throughout
+(backend ruff/mypy-strict/pytest vs real TimescaleDB+Redis, frontend eslint/tsc/vitest,
+hermetic Playwright E2E against the full compose stack, gitleaks). **255 automated checks:
+124 backend tests, 31 frontend tests, 5 E2E tests, 4 CI jobs.** Tagged `v1.0.0`.
+
+What exists: rate-limited Binance ingestion (REST backfill with gap repair + WS live layer with
+order-book sync), TimescaleDB storage with compression, analytics engine (indicators, statistics,
+microstructure, regimes), vectorized backtester with 6 strategies + walk-forward, paper trading
+with testnet executor/sim fallback + guards + kill switch (verified in a >1 h live run), argon2/
+JWT auth with Fernet-encrypted key storage, read-only portfolio, full dark-theme React UI.
+
+Hard constraints honored: no real-money code paths (testnet-only executor, hard-gated);
+gitleaks clean on every push; no skipped tests; no force-pushes.
+
+**Deployed URL: NOT YET — the only unfinished item.** No Railway/Fly credentials were available
+in this environment (`.env.local` absent). All deployment artifacts are ready
+(`railway.json`, `backend/Dockerfile.prod`, `frontend/Dockerfile.prod`, `docs/DEPLOY.md`
+step-by-step incl. EU-region guidance for Binance geo-blocks). To deploy: provide a Railway
+token (or Fly credentials), follow docs/DEPLOY.md — ≈15 minutes — then record the URL here.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH
