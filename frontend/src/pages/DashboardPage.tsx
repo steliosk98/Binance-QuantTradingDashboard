@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api, type TickerSummary } from '../api/client'
+import { LiquidationFeed, WhaleFeed } from '../components/LiveFeeds'
 import { useMarketStore } from '../stores/market'
+import { useTopic } from '../ws/hooks'
 
 function fmtPrice(v: number | null | undefined): string {
   if (v == null) return '—'
@@ -66,11 +69,39 @@ function Row({ t }: { t: TickerSummary }) {
   )
 }
 
+interface LiveTicker {
+  symbol: string
+  last: number
+  change_pct: number
+  quote_volume: number
+}
+
 export default function DashboardPage() {
   const query = useQuery({
     queryKey: ['ticker-summary'],
     queryFn: api.tickerSummary,
-    refetchInterval: 5000,
+    refetchInterval: 30000,
+  })
+  const [live, setLive] = useState<Record<string, LiveTicker>>({})
+  useTopic('tickers', (data) => {
+    const msg = data as { tickers: LiveTicker[] }
+    setLive((prev) => {
+      const next = { ...prev }
+      for (const t of msg.tickers) next[t.symbol] = t
+      return next
+    })
+  })
+
+  const rows = (query.data?.tickers ?? []).map((t) => {
+    const lt = live[t.symbol]
+    return lt
+      ? {
+          ...t,
+          last_price: lt.last,
+          change_24h_pct: lt.change_pct,
+          quote_volume_24h: lt.quote_volume,
+        }
+      : t
   })
 
   return (
@@ -100,13 +131,17 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {query.data.tickers.map((t) => (
+              {rows.map((t) => (
                 <Row key={t.symbol} t={t} />
               ))}
             </tbody>
           </table>
         </div>
       )}
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <LiquidationFeed />
+        <WhaleFeed />
+      </div>
     </div>
   )
 }

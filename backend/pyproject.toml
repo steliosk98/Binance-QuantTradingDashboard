@@ -13,6 +13,8 @@ dependencies = [
     "asyncpg>=0.31.0",
     "alembic>=1.18.4",
     "apscheduler>=3.11.2",
+    "redis>=5",
+    "websockets>=13",
 ]
 
 [dependency-groups]

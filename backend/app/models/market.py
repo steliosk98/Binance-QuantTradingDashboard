@@ -41,6 +41,17 @@ class OpenInterest(Base):
     oi_value: Mapped[float] = mapped_column(Float)
 
 
+class Liquidation(Base):
+    __tablename__ = "liquidations"
+
+    symbol: Mapped[str] = mapped_column(String(20), primary_key=True)
+    ts: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), primary_key=True)
+    side: Mapped[str] = mapped_column(String(4), primary_key=True)
+    price: Mapped[float] = mapped_column(Float)
+    qty: Mapped[float] = mapped_column(Float)
+    value_usdt: Mapped[float] = mapped_column(Float)
+
+
 class LongShortRatio(Base):
     __tablename__ = "long_short_ratio"
 

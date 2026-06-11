@@ -1,4 +1,25 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useWsStatus } from '../ws/hooks'
+
+const STATUS_STYLES = {
+  open: { dot: 'bg-emerald-400', label: 'live' },
+  connecting: { dot: 'bg-amber-400 animate-pulse', label: 'connecting' },
+  closed: { dot: 'bg-red-400', label: 'offline' },
+} as const
+
+function WsIndicator() {
+  const status = useWsStatus()
+  const s = STATUS_STYLES[status]
+  return (
+    <span
+      className="ml-auto flex items-center gap-1.5 text-xs text-zinc-400"
+      data-testid="ws-status"
+    >
+      <span className={`h-2 w-2 rounded-full ${s.dot}`} />
+      {s.label}
+    </span>
+  )
+}
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard' },
@@ -34,6 +55,7 @@ export default function Layout() {
               {item.label}
             </NavLink>
           ))}
+          <WsIndicator />
         </nav>
       </header>
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">

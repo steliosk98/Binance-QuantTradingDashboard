@@ -14,6 +14,13 @@ class Settings(BaseSettings):
     )
     trading_mode: str = "testnet"
     cors_origins: str = "http://localhost:5173"
+    whale_threshold_usd: float = 250_000.0
+    orderbook_symbols: str = "BTCUSDT,ETHUSDT"
+    orderbook_depth_levels: int = 20
+
+    @property
+    def orderbook_symbol_list(self) -> list[str]:
+        return [s.strip().upper() for s in self.orderbook_symbols.split(",") if s.strip()]
 
     @property
     def watchlist_symbols(self) -> list[str]:
