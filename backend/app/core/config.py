@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     app_password_hash: str = ""
     sentry_dsn: str = ""
     environment: str = "development"
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
     json_logs: bool = False
 
     @property

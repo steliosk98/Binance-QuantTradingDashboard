@@ -448,6 +448,27 @@ token (or Fly credentials), follow docs/DEPLOY.md — ≈15 minutes — then rec
   window expiry; fail-closed boot; WS first-frame auth happy/bad/missing). Frontend 33 tests.
   Full E2E 5/5 green. Live browser check: WS URL contains no token and status reaches LIVE.
 
+## V2 Stage 2 — Alert engine (2026-06-12)
+
+### Built
+- Migration 0007: `alert_rules` (kind/symbol/params/enabled/cooldown/state) + `alert_events`.
+- `app/alerts/engine.py`: pure `evaluate_rule` for five kinds — price_cross (edge-triggered with
+  side memory), whale_trade, liquidation, funding_abs, regime_change (label-change with state) —
+  plus AlertEngine with 10s rule cache, per-rule cooldowns, event persistence, `alerts` WS topic
+  publish, optional Telegram delivery (TELEGRAM_BOT_TOKEN/CHAT_ID).
+- Runner inside the ingestion worker: subscribes tickers/whales/liqs/marks + 15-min regime sweep
+  reusing the cached regime computation.
+- API: /api/v1/alerts rules CRUD + toggle + events log (auth-protected).
+- UI: Alerts page (kind-aware rule builder, armed/off toggles, live event log) + command-bar
+  bell with unread badge and recent-alerts dropdown fed by the `alerts` WS topic.
+
+### Verification
+- Backend **138 tests** (cross above/below edge semantics incl. no-refire while above; whale/liq
+  thresholds + symbol filters; funding extreme; regime change fires once per transition; engine
+  cooldown suppresses duplicates + event persisted; Telegram mocked delivery + skip-without-config;
+  CRUD validation). Live: created whale rule via API → injected synthetic whale on Redis →
+  "Whale BUY BTCUSDT $527,000" fired, persisted, and logged by the worker within 3s.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH

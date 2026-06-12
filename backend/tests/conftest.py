@@ -30,6 +30,8 @@ TABLES = [
     "paper_orders",
     "paper_equity",
     "app_settings",
+    "alert_rules",
+    "alert_events",
 ]
 
 

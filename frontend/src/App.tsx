@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from './api/client'
 import Layout from './components/Layout'
+import AlertsPage from './pages/AlertsPage'
 import BacktestPage from './pages/BacktestPage'
 import ChartPage from './pages/ChartPage'
 import DashboardPage from './pages/DashboardPage'
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="research" element={<ResearchPage />} />
         <Route path="backtest" element={<BacktestPage />} />
         <Route path="paper" element={<PaperPage />} />
+        <Route path="alerts" element={<AlertsPage />} />
         <Route path="portfolio" element={<PortfolioPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
