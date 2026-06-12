@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     secret_key: str = ""
     app_password_hash: str = ""
     sentry_dsn: str = ""
+    environment: str = "development"
     json_logs: bool = False
 
     @property

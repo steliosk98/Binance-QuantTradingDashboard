@@ -126,7 +126,7 @@ async def _execute(backtest_id: str, req: BacktestRequest) -> None:
             row = await session.get(Backtest, backtest_id)
             if row is not None:
                 row.status = "error"
-                row.error = str(exc)
+                row.error = f"{type(exc).__name__}: {exc}"[:300]
                 await session.commit()
 
 

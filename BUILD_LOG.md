@@ -427,6 +427,27 @@ token (or Fly credentials), follow docs/DEPLOY.md — ≈15 minutes — then rec
   heatmap) — verified via DOM scan in Playwright.
 - Screenshots: docs/screenshots/design-*.png (login, dashboard, chart, backtest, mobile).
 
+## V2 Stage 1 — Security hardening (2026-06-11)
+
+### Built
+- Login brute-force throttling: 5 failed attempts per client IP per 60s → 429 + Retry-After;
+  success resets the counter; client IP honors X-Forwarded-For (uvicorn prod now runs with
+  --proxy-headers).
+- Fail-closed production: `ENVIRONMENT=production` refuses to boot unless SECRET_KEY +
+  APP_PASSWORD_HASH are set (`enforce_production_auth` at import).
+- WS auth moved out of the URL: first-frame `{"op":"auth","token":…}` with 5s timeout →
+  `{"op":"authenticated"}` ack; JWTs no longer appear in proxy/access logs. Frontend manager
+  sends the auth frame on every (re)connect.
+- nginx security headers: CSP (self + Google Fonts), X-Frame-Options DENY, nosniff,
+  Referrer-Policy, Permissions-Policy.
+- Logout ("EXIT") button in the command bar when auth is enabled; stored backtest errors
+  sanitized to `ExcType: message` truncated at 300 chars.
+
+### Verification
+- Backend **129 tests** (new: throttle → 429 incl. correct password while blocked; counter reset;
+  window expiry; fail-closed boot; WS first-frame auth happy/bad/missing). Frontend 33 tests.
+  Full E2E 5/5 green. Live browser check: WS URL contains no token and status reaches LIVE.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH

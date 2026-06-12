@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
+import { useAuthStore } from '../stores/auth'
 import TickerTape from './TickerTape'
 import { useWsStatus } from '../ws/hooks'
 
@@ -59,6 +60,24 @@ function UtcClock() {
   )
 }
 
+function LogoutButton() {
+  const authQuery = useQuery({
+    queryKey: ['auth-status'],
+    queryFn: api.authStatus,
+  })
+  const clear = useAuthStore((s) => s.clear)
+  if (!authQuery.data?.auth_enabled) return null
+  return (
+    <button
+      onClick={clear}
+      className="cursor-pointer rounded-sm px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-zinc-500 uppercase transition-colors hover:bg-zinc-800 hover:text-red-400"
+      aria-label="Sign out"
+    >
+      Exit
+    </button>
+  )
+}
+
 export default function Layout() {
   const portfolioStatus = useQuery({
     queryKey: ['portfolio-status'],
@@ -100,6 +119,7 @@ export default function Layout() {
           <div className="ml-auto flex items-center gap-4">
             <UtcClock />
             <WsIndicator />
+            <LogoutButton />
           </div>
         </nav>
         <TickerTape />

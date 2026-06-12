@@ -33,6 +33,13 @@ export class WsManager {
     this.ws.onopen = () => {
       this.attempt = 0
       this.setStatus('open')
+      // First-message auth keeps the JWT out of the URL (and proxy logs).
+      try {
+        const token = localStorage.getItem('cryptoquant_token')
+        if (token) this.ws?.send(JSON.stringify({ op: 'auth', token }))
+      } catch {
+        // no localStorage (tests)
+      }
       const topics = [...this.handlers.keys()]
       if (topics.length > 0) {
         this.ws?.send(JSON.stringify({ op: 'subscribe', topics }))
@@ -118,14 +125,7 @@ export class WsManager {
 
 function defaultWsUrl(): string {
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  let url = `${proto}://${window.location.host}/ws`
-  try {
-    const token = localStorage.getItem('cryptoquant_token')
-    if (token) url += `?token=${encodeURIComponent(token)}`
-  } catch {
-    // no localStorage (tests)
-  }
-  return url
+  return `${proto}://${window.location.host}/ws`
 }
 
 let instance: WsManager | null = null
