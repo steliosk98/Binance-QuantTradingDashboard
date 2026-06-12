@@ -31,6 +31,8 @@ Live market data · technical & statistical analytics · vectorized backtesting 
 - 🔔 **Alert engine** — price crosses, whale trades, liquidation cascades, funding extremes and regime changes evaluated live, with an in-app alert bell and optional **Telegram delivery**
 - 🔁 **Pairs trading** — rolling-hedge-ratio spread engine with z-score entry/exit: dual-leg backtests and simulated paper trading
 - 🎛️ **Parameter optimizer** — 2-param grid search rendering a Sharpe heatmap with one-click apply of the best cell
+- 🛩️ **Autopilot (V3)** — paper instances re-optimize themselves on a schedule via walk-forward grid search, adopting new parameters only when they win out-of-sample
+- 📤 **Research export (V3)** — one-click CSV downloads for candles, backtest trades and equity curves
 - ⌨️ **Command palette & multi-chart** — ⌘K to jump anywhere, 2×2 live chart grid
 - 🔐 **Single-user auth & key custody** — argon2 + JWT on every route with login rate-limiting and fail-closed production mode, WS auth without URL tokens, CSP headers, Binance keys Fernet-encrypted at rest and never returned to the client, read-only portfolio view
 - 🖥️ **Terminal-grade UI** — dark mission-control design, JetBrains Mono tabular numerals, price-flash animations, live sparklines, `prefers-reduced-motion` support

@@ -264,6 +264,12 @@ export interface PaperInstanceSummary {
   position_qty: number
   realized_pnl: number
   halted_today: boolean
+  autopilot?: boolean
+  retrain_history?: {
+    params: Record<string, number>
+    val_sharpe: number
+    ts: number
+  }[]
 }
 
 export interface PaperOrderOut {
@@ -329,6 +335,24 @@ export interface OptimizeResponse {
   best: { sharpe: number; total_return: number; params: Record<string, number> }
 }
 
+export async function downloadCsv(path: string): Promise<void> {
+  const resp = await fetch(`${BASE}${path}`, { headers: authHeaders() })
+  if (!resp.ok) {
+    handleUnauthorized(resp)
+    throw new Error(`GET ${path} failed: ${resp.status}`)
+  }
+  const blob = await resp.blob()
+  const name =
+    resp.headers.get('content-disposition')?.match(/filename="(.+)"/)?.[1] ??
+    'export.csv'
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = name
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export const api = {
   optimize: (body: {
     strategy: string
@@ -386,6 +410,8 @@ export const api = {
     params: Record<string, number>
     max_position_usd: number
     max_daily_loss_usd: number
+    autopilot?: boolean
+    retrain_hours?: number
   }) => postJson<PaperInstanceSummary>('/paper/instances', body),
   stopPaperInstance: (id: string) =>
     postJson<PaperInstanceSummary>(`/paper/instances/${id}/stop`, {}),

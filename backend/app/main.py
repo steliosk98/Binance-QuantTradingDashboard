@@ -6,6 +6,7 @@ from app.api.analytics import router as analytics_router
 from app.api.auth import enforce_production_auth, require_auth
 from app.api.auth import router as auth_router
 from app.api.backtests import router as backtests_router
+from app.api.export import router as export_router
 from app.api.health import router as health_router
 from app.api.market import router as market_router
 from app.api.optimize import router as optimize_router
@@ -51,3 +52,4 @@ app.include_router(settings_router, dependencies=protected)
 app.include_router(portfolio_router, dependencies=protected)
 app.include_router(alerts_router, dependencies=protected)
 app.include_router(optimize_router, dependencies=protected)
+app.include_router(export_router, dependencies=protected)
