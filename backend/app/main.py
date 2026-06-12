@@ -23,7 +23,7 @@ if settings.json_logs:
     setup_json_logging()
 setup_sentry()
 
-app = FastAPI(title=settings.app_name, version="1.0.0")
+app = FastAPI(title=settings.app_name, version="2.0.0")
 
 app.middleware("http")(request_id_middleware)
 

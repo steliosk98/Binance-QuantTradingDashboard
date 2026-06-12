@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
 import { useAuthStore } from '../stores/auth'
 import AlertBell from './AlertBell'
+import CommandPalette from './CommandPalette'
 import TickerTape from './TickerTape'
 import { useWsStatus } from '../ws/hooks'
 
@@ -119,6 +120,9 @@ export default function Layout() {
             </NavLink>
           ))}
           <div className="ml-auto flex items-center gap-4">
+            <span className="hidden font-mono text-[10px] text-zinc-600 lg:block">
+              ⌘K
+            </span>
             <UtcClock />
             <AlertBell />
             <WsIndicator />
@@ -127,6 +131,7 @@ export default function Layout() {
         </nav>
         <TickerTape />
       </header>
+      <CommandPalette />
       <main className="w-full min-w-0 flex-1 overflow-x-clip px-4 py-4 2xl:px-6">
         <Outlet />
       </main>

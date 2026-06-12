@@ -9,6 +9,7 @@ import CandleChart, {
 import DepthPanel from '../components/DepthPanel'
 import FuturesPanel from '../components/FuturesPanel'
 import MicroPanel from '../components/MicroPanel'
+import MultiChart from '../components/MultiChart'
 import { INTERVALS, useMarketStore } from '../stores/market'
 import { useTopic } from '../ws/hooks'
 
@@ -35,6 +36,7 @@ export default function ChartPage() {
   const [liveCandle, setLiveCandle] = useState<LiveCandle | null>(null)
   const [active, setActive] = useState<Set<IndicatorName>>(new Set())
   const [showFutures, setShowFutures] = useState(false)
+  const [gridMode, setGridMode] = useState(false)
 
   const symbolsQuery = useQuery({ queryKey: ['symbols'], queryFn: api.symbols })
   const candlesQuery = useQuery({
@@ -174,39 +176,55 @@ export default function ChartPage() {
         >
           Futures
         </button>
+        <button
+          onClick={() => setGridMode((v) => !v)}
+          className={`cursor-pointer rounded px-2 py-1 text-xs font-medium ${
+            gridMode
+              ? 'bg-amber-400/15 text-amber-400'
+              : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+          }`}
+        >
+          Grid 2×2
+        </button>
       </div>
-      <MicroPanel symbol={symbol} />
-      <div className="flex min-h-0 flex-1 gap-3">
-        <div className="min-w-0 flex-1 rounded border border-zinc-800 bg-zinc-900/50 p-2">
-          {candlesQuery.isLoading && (
-            <p className="p-4 text-zinc-400" role="status">
-              Loading candles…
-            </p>
-          )}
-          {candlesQuery.isError && (
-            <p className="p-4 text-red-400" role="alert">
-              Failed to load candles: {String(candlesQuery.error)}
-            </p>
-          )}
-          {candlesQuery.data && candlesQuery.data.candles.length === 0 && (
-            <p className="p-4 text-zinc-400">
-              No data for {symbol} {interval}. Run the backfill first.
-            </p>
-          )}
-          {candlesQuery.data && candlesQuery.data.candles.length > 0 && (
-            <CandleChart
-              candles={candlesQuery.data.candles}
-              liveCandle={liveCandle}
-              overlays={overlays}
-              paneSeries={paneSeries}
-            />
-          )}
-        </div>
-        <div className="hidden w-64 shrink-0 rounded border border-zinc-800 bg-zinc-900/50 lg:block">
-          <DepthPanel symbol={symbol} />
-        </div>
-      </div>
-      {showFutures && <FuturesPanel symbol={symbol} />}
+      {gridMode ? (
+        <MultiChart interval={interval} />
+      ) : (
+        <>
+          <MicroPanel symbol={symbol} />
+          <div className="flex min-h-0 flex-1 gap-3">
+            <div className="min-w-0 flex-1 rounded border border-zinc-800 bg-zinc-900/50 p-2">
+              {candlesQuery.isLoading && (
+                <p className="p-4 text-zinc-400" role="status">
+                  Loading candles…
+                </p>
+              )}
+              {candlesQuery.isError && (
+                <p className="p-4 text-red-400" role="alert">
+                  Failed to load candles: {String(candlesQuery.error)}
+                </p>
+              )}
+              {candlesQuery.data && candlesQuery.data.candles.length === 0 && (
+                <p className="p-4 text-zinc-400">
+                  No data for {symbol} {interval}. Run the backfill first.
+                </p>
+              )}
+              {candlesQuery.data && candlesQuery.data.candles.length > 0 && (
+                <CandleChart
+                  candles={candlesQuery.data.candles}
+                  liveCandle={liveCandle}
+                  overlays={overlays}
+                  paneSeries={paneSeries}
+                />
+              )}
+            </div>
+            <div className="hidden w-64 shrink-0 rounded border border-zinc-800 bg-zinc-900/50 lg:block">
+              <DepthPanel symbol={symbol} />
+            </div>
+          </div>
+          {showFutures && <FuturesPanel symbol={symbol} />}
+        </>
+      )}
     </div>
   )
 }

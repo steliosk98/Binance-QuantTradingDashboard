@@ -77,3 +77,18 @@ test('saved backtest reloads from the list', async ({ page }) => {
     timeout: 30000,
   })
 })
+
+test('command palette jumps to a symbol chart', async ({ page }) => {
+  await login(page)
+  await page.keyboard.press('ControlOrMeta+KeyK')
+  await page.waitForSelector('[data-testid="command-palette"]')
+  await page.fill('input[aria-label="Command"]', 'eth')
+  await page.waitForSelector('[data-testid="command-palette"] >> text=Chart ETH/USDT')
+  await page.keyboard.press('Enter')
+  await page.waitForSelector('[data-testid="candle-chart"] canvas', {
+    timeout: 30000,
+  })
+  await expect(page.locator('select[aria-label="Symbol"]')).toHaveValue(
+    'ETHUSDT',
+  )
+})

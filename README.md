@@ -28,7 +28,11 @@ Live market data · technical & statistical analytics · vectorized backtesting 
 - 📈 **A real analytics engine** — Wilder-exact RSI/ATR/ADX, MACD, Bollinger, VWAP, Ichimoku, 3 realized-vol estimators, Hurst exponent, ADF & Engle-Granger cointegration, order-book imbalance + CVD, per-symbol **market regime classification**
 - ⚡ **Vectorized backtesting** — 6 built-in strategies with auto-generated parameter forms, fees + slippage, full metric suite, **walk-forward optimization with in-sample vs out-of-sample shown side by side** (2 years of hourly candles in <1s)
 - 🤖 **Paper trading with guardrails** — strategy instances run live against closed candles on Binance Testnet (or internal sim fills), with max-position & daily-loss guards and a kill switch that halts within one evaluation cycle
-- 🔐 **Single-user auth & key custody** — argon2 + JWT on every route, Binance keys Fernet-encrypted at rest and never returned to the client, read-only portfolio view
+- 🔔 **Alert engine** — price crosses, whale trades, liquidation cascades, funding extremes and regime changes evaluated live, with an in-app alert bell and optional **Telegram delivery**
+- 🔁 **Pairs trading** — rolling-hedge-ratio spread engine with z-score entry/exit: dual-leg backtests and simulated paper trading
+- 🎛️ **Parameter optimizer** — 2-param grid search rendering a Sharpe heatmap with one-click apply of the best cell
+- ⌨️ **Command palette & multi-chart** — ⌘K to jump anywhere, 2×2 live chart grid
+- 🔐 **Single-user auth & key custody** — argon2 + JWT on every route with login rate-limiting and fail-closed production mode, WS auth without URL tokens, CSP headers, Binance keys Fernet-encrypted at rest and never returned to the client, read-only portfolio view
 - 🖥️ **Terminal-grade UI** — dark mission-control design, JetBrains Mono tabular numerals, price-flash animations, live sparklines, `prefers-reduced-motion` support
 
 ## Screenshots
@@ -38,6 +42,10 @@ Live market data · technical & statistical analytics · vectorized backtesting 
 | <img src="docs/screenshots/hero-chart.png" alt="Chart page"/> | <img src="docs/screenshots/hero-backtest.png" alt="Backtest page"/> |
 | **Research — distributions, QQ, volatility, cointegration** | **Mission control on mobile** |
 | <img src="docs/screenshots/hero-research.png" alt="Research page"/> | <img src="docs/screenshots/design-mobile.png" alt="Mobile" height="420"/> |
+| **V2: parameter optimizer — Sharpe grid with apply-best** | **V2: alert rules + live event log** |
+| <img src="docs/screenshots/v2-optimizer.png" alt="Optimizer heatmap"/> | <img src="docs/screenshots/v2-alerts.png" alt="Alerts page"/> |
+| **V2: ⌘K command palette** | **V2: 2×2 live multi-chart grid** |
+| <img src="docs/screenshots/v2-palette.png" alt="Command palette"/> | <img src="docs/screenshots/v2-multichart.png" alt="Multi-chart grid"/> |
 
 ## Architecture
 
@@ -137,7 +145,7 @@ A runner subscribes to closed candles and evaluates every running strategy insta
 | Quality | ruff · mypy --strict · pytest (vs real TimescaleDB+Redis) · eslint · vitest · Playwright E2E · gitleaks |
 | Ops | Docker Compose · GitHub Actions · multi-stage non-root prod images · structured JSON logs with request IDs |
 
-**260+ automated checks** run on every push: 124 backend tests, 33 frontend tests, 5 full-stack E2E tests (hermetic — synthetic data, no exchange dependency), plus lint/type/secret gates.
+**290+ automated checks** run on every push: 150 backend tests, 33 frontend tests, 6 full-stack E2E tests (hermetic — synthetic data, no exchange dependency), plus lint/type/secret gates.
 
 ## Configuration
 
@@ -155,13 +163,15 @@ Copy `.env.example` to `.env`. Everything degrades gracefully when optional keys
 | `BINANCE_TESTNET_API_KEY/SECRET` | — | real testnet fills (else simulated) |
 | `WHALE_THRESHOLD_USD` | — | whale feed threshold (default 250k) |
 | `JSON_LOGS` | prod | structured logs with request IDs |
+| `TELEGRAM_BOT_TOKEN/CHAT_ID` | — | alert delivery to Telegram |
+| `ENVIRONMENT` | prod | `production` refuses to boot without auth (fail closed) |
 | `SENTRY_DSN` | — | error reporting |
 
 ¹ Generate with `uv run python -c "from app.core.security import hash_password; print(hash_password('yourpw'))"`
 
 ## Security model
 
-Single-tenant by design. Argon2 + 24h JWTs protect every route and the WebSocket; CORS is locked to the frontend origin; Binance keys are Fernet-encrypted at rest, never returned to clients, and leak-tested in CI; the trading path is hard-gated to testnet. Before exposing an instance to the public internet, read the hardening notes in [BUILD_LOG.md](BUILD_LOG.md) — most importantly: always set `SECRET_KEY`/`APP_PASSWORD_HASH` (auth is off without them) and put the API behind TLS.
+Single-tenant by design. Argon2 + 24h JWTs protect every route and the WebSocket; CORS is locked to the frontend origin; Binance keys are Fernet-encrypted at rest, never returned to clients, and leak-tested in CI; the trading path is hard-gated to testnet. V2 hardening: per-IP login rate limiting, `ENVIRONMENT=production` fails closed without auth, WebSocket auth via first message (no JWTs in URLs or proxy logs), CSP and security headers in the prod image. Always put a public instance behind TLS.
 
 ## Project log
 
