@@ -491,6 +491,21 @@ token (or Fly credentials), follow docs/DEPLOY.md — ≈15 minutes — then rec
   SELLs the spiked leg). Live: BTCUSDT/ETHUSDT 1h × 2y pairs backtest via API → done, 17,552
   bars, 148 trades (negative return — honest result for naive BTC/ETH stat-arb at 15 bps).
 
+## V2 Stage 4 — Parameter optimization heatmap (2026-06-12)
+
+### Built
+- `POST /api/v1/optimize`: 2-parameter grid search (≤144 cells, ≤12 per axis) over any
+  single-asset strategy — full backtest per cell off the event loop, returns Sharpe + return
+  matrices and the best cell; validates params against the strategy schema, rejects pairs.
+- Optimizer panel on the Backtest page: axis pickers from the param schema, auto-ranged grids
+  (8 steps min→max, int-rounded + deduped), red→teal Sharpe heatmap, "best Sharpe @ params"
+  readout with one-click **apply →** into the backtest form.
+
+### Verification
+- Backend tests: grid shape, best-cell consistency with its matrix entry, schema/pairs
+  validation. Live: 8×8 SMA-crossover grid on 2 years of real BTCUSDT 1h → heatmap rendered,
+  best cell (fast=32 slow=66, Sharpe 0.54) applied to the form via the UI.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH
