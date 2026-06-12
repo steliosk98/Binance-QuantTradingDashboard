@@ -5,6 +5,7 @@ import {
   type BacktestDetail,
   type BacktestMetrics,
   type StrategySpec,
+  downloadCsv,
 } from '../api/client'
 import Optimizer from '../components/Optimizer'
 import Plot from '../components/Plot'
@@ -492,6 +493,24 @@ export default function BacktestPage() {
       )}
       {detail?.status === 'done' && detail.metrics && (
         <>
+          <div className="flex gap-2">
+            <button
+              onClick={() =>
+                void downloadCsv(`/export/backtests/${detail.id}/trades.csv`)
+              }
+              className="cursor-pointer rounded-sm border border-zinc-700 px-2 py-0.5 font-mono text-[10px] tracking-[0.1em] text-zinc-400 uppercase hover:border-amber-400/40 hover:text-amber-400"
+            >
+              Export trades CSV
+            </button>
+            <button
+              onClick={() =>
+                void downloadCsv(`/export/backtests/${detail.id}/equity.csv`)
+              }
+              className="cursor-pointer rounded-sm border border-zinc-700 px-2 py-0.5 font-mono text-[10px] tracking-[0.1em] text-zinc-400 uppercase hover:border-amber-400/40 hover:text-amber-400"
+            >
+              Export equity CSV
+            </button>
+          </div>
           <MetricsCards metrics={detail.metrics} />
           <EquityChart detail={detail} />
           {detail.equity && <MonthlyHeatmap equity={detail.equity} />}

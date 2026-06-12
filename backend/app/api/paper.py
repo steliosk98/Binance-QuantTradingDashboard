@@ -29,6 +29,8 @@ class CreateInstanceRequest(BaseModel):
     params: dict[str, float] = Field(default_factory=dict)
     max_position_usd: float = Field(default=10_000.0, gt=0)
     max_daily_loss_usd: float = Field(default=500.0, gt=0)
+    autopilot: bool = False
+    retrain_hours: int = Field(default=24, ge=1, le=720)
 
 
 def _instance_summary(r: PaperInstance) -> dict[str, Any]:
@@ -47,6 +49,8 @@ def _instance_summary(r: PaperInstance) -> dict[str, Any]:
         "position_qty": state.get("position_qty", 0.0),
         "realized_pnl": state.get("realized_pnl", 0.0),
         "halted_today": state.get("halted_today", False),
+        "autopilot": bool((r.guards_json or {}).get("autopilot", False)),
+        "retrain_history": state.get("retrain_history", []),
     }
 
 
@@ -81,6 +85,8 @@ async def create_instance(req: CreateInstanceRequest, db: DbSession) -> dict[str
             **DEFAULT_GUARDS,
             "max_position_usd": req.max_position_usd,
             "max_daily_loss_usd": req.max_daily_loss_usd,
+            "autopilot": req.autopilot,
+            "retrain_hours": req.retrain_hours,
         },
         state_json=default_state(),
     )

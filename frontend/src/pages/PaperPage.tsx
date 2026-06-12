@@ -21,6 +21,7 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
   const [qtyUsd, setQtyUsd] = useState(1000)
   const [maxPos, setMaxPos] = useState(2000)
   const [maxLoss, setMaxLoss] = useState(500)
+  const [autopilot, setAutopilot] = useState(false)
   const [params, setParams] = useState<Record<string, number>>({})
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -46,6 +47,7 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
         ),
         max_position_usd: maxPos,
         max_daily_loss_usd: maxLoss,
+        autopilot,
       })
       onCreated()
     } catch (e) {
@@ -172,6 +174,15 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
           className="w-24 rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
         />
       </label>
+      <label className="flex items-center gap-1.5 text-sm text-zinc-400">
+        <input
+          type="checkbox"
+          aria-label="Autopilot retraining"
+          checked={autopilot}
+          onChange={(e) => setAutopilot(e.target.checked)}
+        />
+        Autopilot
+      </label>
       <button
         onClick={() => void create()}
         disabled={busy}
@@ -219,6 +230,11 @@ function InstanceRow({
         </span>
         {inst.halted_today && (
           <span className="ml-1 text-amber-400">(halted: daily loss)</span>
+        )}
+        {inst.autopilot && (
+          <span className="ml-1 rounded-sm border border-sky-400/30 bg-sky-400/10 px-1 font-mono text-[9px] text-sky-400">
+            AUTO
+          </span>
         )}
       </td>
       <td className="px-2 py-1.5 text-right tabular-nums">

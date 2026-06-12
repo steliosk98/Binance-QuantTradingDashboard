@@ -82,3 +82,25 @@ async def test_optimize_validation(client: httpx.AsyncClient) -> None:
         },
     )
     assert pairs.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_export_candles_csv(client: httpx.AsyncClient, db_session: AsyncSession) -> None:
+    base = int(datetime(2024, 1, 1, tzinfo=UTC).timestamp() * 1000)
+    await upsert_candles(db_session, "BTCUSDT", "1h", synth_klines(base, 50, seed=2))
+    await db_session.commit()
+    resp = await client.get(
+        "/api/v1/export/candles.csv", params={"symbol": "BTCUSDT", "interval": "1h"}
+    )
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("text/csv")
+    assert "attachment" in resp.headers["content-disposition"]
+    lines = resp.text.strip().splitlines()
+    assert lines[0].startswith("open_time,open,high")
+    assert len(lines) == 51  # header + 50 rows
+
+
+@pytest.mark.asyncio
+async def test_export_backtest_404(client: httpx.AsyncClient) -> None:
+    resp = await client.get("/api/v1/export/backtests/nope/trades.csv")
+    assert resp.status_code == 404

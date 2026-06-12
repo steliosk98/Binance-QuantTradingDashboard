@@ -536,6 +536,35 @@ V2 delivered in five staged PRs (#14–#18), each CI-green and live-verified:
 
 Totals: ~150 backend + 33 frontend + 6 E2E tests, all gates green. Tagged `v2.0.0`.
 
+## V3 — Autopilot + research export, v3.0.0 (2026-06-12)
+
+### Scope decision
+User: "execute it autonomously." Of the V3 seeds, the LLM research copilot is blocked on an LLM
+API key (none in this environment — same class as the deploy blocker), so V3 shipped the two
+executable pillars: **Autopilot** (walk-forward auto-retraining for paper instances) and **CSV
+research export**.
+
+### Built
+- `app/paper/autopilot.py`: `retrain()` — grid-search the strategy's declared param grid on the
+  older 70% of recent candles, adopt the winner ONLY if it also beats the instance's *current*
+  params on the held-out 30% validation tail (overfitting guard). Wired into the paper runner:
+  opt-in per instance (`autopilot` + `retrain_hours` guards), runs off the event loop before
+  evaluation, appends a capped retrain history + adopted params into instance state.
+- Paper API/UI: autopilot flag + retrain interval on create; AUTO badge on instance rows;
+  retrain history exposed in summaries.
+- `app/api/export.py`: auth-protected CSV downloads — `/export/candles.csv` (≤20k rows),
+  `/export/backtests/{id}/trades.csv`, `/equity.csv` with attachment headers; terminal-styled
+  export buttons on backtest results using an auth-aware blob downloader.
+
+### Verification
+- Backend **156 tests** (retrain adopts better params on trending data; fixed-point: re-running
+  with the grid's best returns None; refuses pairs + short data; runner integration updates
+  params + history once per interval and skips when disabled; CSV content-type/disposition/row
+  counts; 404s). Frontend 33; **E2E 6/6**.
+- Live: created an autopilot SMA instance via the UI (AUTO badge shown); on the next 1m candle
+  the runner retrained and the validation guard correctly KEPT current params ("val -55.95 >=
+  candidate -inf") — guard semantics proven in production. Trades CSV downloaded via the UI.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH
