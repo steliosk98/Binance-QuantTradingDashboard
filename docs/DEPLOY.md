@@ -19,6 +19,7 @@ plus managed **PostgreSQL with TimescaleDB** and **Redis**.
 | `APP_PASSWORD_HASH` | backend | argon2 hash (see README) |
 | `CORS_ORIGINS` | backend | frontend public origin |
 | `JSON_LOGS` | all backend services | `true` in production |
+| `ENVIRONMENT` | backend | `production` — fails closed if auth is unconfigured |
 | `BACKEND_URL` | frontend | internal URL of the backend service |
 | `TRADING_MODE` | paper | must stay `testnet` |
 | `BINANCE_TESTNET_API_KEY/SECRET` | paper | optional (sim fills without) |

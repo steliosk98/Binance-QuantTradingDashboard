@@ -2,7 +2,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.analytics import router as analytics_router
-from app.api.auth import require_auth
+from app.api.auth import enforce_production_auth, require_auth
 from app.api.auth import router as auth_router
 from app.api.backtests import router as backtests_router
 from app.api.health import router as health_router
@@ -15,6 +15,7 @@ from app.core.config import get_settings
 from app.core.logging import request_id_middleware, setup_json_logging, setup_sentry
 
 settings = get_settings()
+enforce_production_auth()
 
 if settings.json_logs:
     setup_json_logging()

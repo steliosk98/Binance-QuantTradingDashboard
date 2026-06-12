@@ -44,19 +44,28 @@ async def _relay(pubsub: PubSub, websocket: WebSocket) -> None:
             )
 
 
+AUTH_TIMEOUT_SECONDS = 5.0
+
+
 @router.websocket("/ws")
 async def ws_hub(websocket: WebSocket) -> None:
     from app.core.config import get_settings
     from app.core.security import verify_token
 
+    await websocket.accept()
     if get_settings().auth_enabled:
-        token = websocket.query_params.get("token", "")
+        # First-message auth: {"op":"auth","token":...}. Keeps the JWT out of
+        # the URL so it never lands in proxy/access logs.
         try:
-            verify_token(token)
+            raw = await asyncio.wait_for(websocket.receive_text(), timeout=AUTH_TIMEOUT_SECONDS)
+            msg = json.loads(raw)
+            if msg.get("op") != "auth":
+                raise ValueError("expected auth frame")
+            verify_token(str(msg.get("token", "")))
         except Exception:
             await websocket.close(code=4401, reason="unauthorized")
             return
-    await websocket.accept()
+        await websocket.send_text(json.dumps({"op": "authenticated"}))
     redis = get_redis()
     pubsub = redis.pubsub()
     relay_task: asyncio.Task[None] | None = None
