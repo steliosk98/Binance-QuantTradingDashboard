@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.analytics.data import load_candles_df
 from app.api.deps import get_db
 from app.backtest.engine import run_backtest
+from app.backtest.pairs import run_pairs_backtest
 from app.backtest.strategies import STRATEGIES
 from app.backtest.walkforward import run_walk_forward
 from app.db.session import get_session_factory
@@ -33,6 +34,7 @@ DbSession = Annotated[AsyncSession, Depends(get_db)]
 class BacktestRequest(BaseModel):
     strategy: str
     symbol: str = Field(min_length=5, max_length=20)
+    symbol_b: str | None = Field(default=None, min_length=5, max_length=20)
     interval: str = "1h"
     params: dict[str, float] = Field(default_factory=dict)
     start: datetime | None = None
@@ -86,15 +88,31 @@ async def _execute(backtest_id: str, req: BacktestRequest) -> None:
                 raise ValueError(f"not enough candles for {req.symbol} {req.interval}")
 
             params = {p.name: req.params.get(p.name, p.default) for p in spec.params}
-            # Heavy compute off the event loop.
-            result = await asyncio.to_thread(
-                run_backtest,
-                df,
-                spec.generate(df, params),
-                req.interval,
-                req.fee_bps,
-                req.slippage_bps,
-            )
+            if spec.needs_pair:
+                assert req.symbol_b is not None
+                df_b = await load_candles_df(session, req.symbol_b.upper(), req.interval, MAX_BARS)
+                if len(df_b) < 100:
+                    raise ValueError(f"not enough candles for {req.symbol_b} {req.interval}")
+                result, _z = await asyncio.to_thread(
+                    run_pairs_backtest,
+                    df,
+                    df_b,
+                    req.interval,
+                    params,
+                    req.fee_bps,
+                    req.slippage_bps,
+                )
+                params["symbol_b"] = req.symbol_b.upper()  # type: ignore[assignment]
+            else:
+                # Heavy compute off the event loop.
+                result = await asyncio.to_thread(
+                    run_backtest,
+                    df,
+                    spec.generate(df, params),
+                    req.interval,
+                    req.fee_bps,
+                    req.slippage_bps,
+                )
             wf: dict[str, Any] | None = None
             if req.walk_forward:
                 wf = await asyncio.to_thread(
@@ -136,6 +154,12 @@ async def create_backtest(req: BacktestRequest, db: DbSession) -> dict[str, str]
         raise HTTPException(status_code=422, detail=f"unknown strategy {req.strategy!r}")
     if req.interval not in INTERVAL_MS:
         raise HTTPException(status_code=422, detail=f"unsupported interval {req.interval!r}")
+    spec = STRATEGIES[req.strategy]
+    if spec.needs_pair:
+        if not req.symbol_b or req.symbol_b.upper() == req.symbol.upper():
+            raise HTTPException(status_code=422, detail="pairs strategy needs a distinct symbol_b")
+        if req.walk_forward:
+            raise HTTPException(status_code=422, detail="walk-forward is single-asset only")
     backtest_id = str(uuid.uuid4())
     row = Backtest(
         id=backtest_id,

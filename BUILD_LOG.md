@@ -469,6 +469,28 @@ token (or Fly credentials), follow docs/DEPLOY.md — ≈15 minutes — then rec
   CRUD validation). Live: created whale rule via API → injected synthetic whale on Redis →
   "Whale BUY BTCUSDT $527,000" fired, persisted, and logged by the worker within 3s.
 
+## V2 Stage 3 — Pairs trading (2026-06-12)
+
+### Built
+- `app/backtest/pairs.py`: dollar-neutral two-leg engine — rolling hedge ratio (cov/var), spread
+  z-score entry/exit with the same next-bar (no look-ahead) convention, gross-normalized spread
+  returns, 2-leg turnover costs, round-trip extraction with PnL measured on strategy equity and
+  entry/exit recorded as z-scores.
+- `pairs_trading` registered in the strategy registry with `needs_pair`; backtest API accepts
+  `symbol_b` (validated distinct; walk-forward rejected as single-asset only).
+- Paper engine: `evaluate_pairs_instance` — sim-fill-only (spot testnet can't short the hedge
+  leg), per-leg position/avg-entry accounting with shared realized PnL, two orders per rebalance,
+  dual-leg unrealized equity snapshots.
+- UI: "Symbol B (hedge leg)" selectors appear on Backtest and Paper pages when the strategy
+  declares needs_pair.
+
+### Verification
+- Backend **143 tests** (target-position entry/exit semantics with |z| threshold proof; hedge
+  ratio recovers ≈2 on synthetic cointegrated pair; profitable + Sharpe>1 under realistic costs
+  on textbook stat-arb data; determinism; paper two-leg evaluation produces both orders and
+  SELLs the spiked leg). Live: BTCUSDT/ETHUSDT 1h × 2y pairs backtest via API → done, 17,552
+  bars, 148 trades (negative return — honest result for naive BTC/ETH stat-arb at 15 bps).
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH

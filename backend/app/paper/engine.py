@@ -21,6 +21,107 @@ logger = logging.getLogger(__name__)
 DEFAULT_GUARDS = {"max_position_usd": 10_000.0, "max_daily_loss_usd": 500.0}
 
 
+async def evaluate_pairs_instance(
+    session: "AsyncSession",
+    instance: "PaperInstance",
+    df: "pd.DataFrame",
+    executor: "Executor",
+) -> "PaperOrder | None":
+    """Dollar-neutral two-leg pairs evaluation (sim fills only — spot testnet
+    cannot short the hedge leg)."""
+    from app.analytics.data import load_candles_df
+    from app.backtest.pairs import pairs_target_positions
+
+    if executor.name == "testnet":
+        logger.warning("pairs instance %s requires sim mode; skipping", instance.id)
+        return None
+    spec = STRATEGIES[instance.strategy]
+    raw_params = instance.params_json or {}
+    symbol_b = str(raw_params.get("symbol_b", "")).upper()
+    if not symbol_b:
+        logger.warning("pairs instance %s missing symbol_b", instance.id)
+        return None
+    params = {p.name: float(raw_params.get(p.name, p.default)) for p in spec.params}
+    df_b = await load_candles_df(session, symbol_b, instance.interval, len(df))
+    if len(df_b) < 100:
+        return None
+
+    close_a = df["close"]
+    close_b = df_b["close"].reindex(close_a.index).ffill()
+    aligned = pd.concat([close_a, close_b], axis=1, keys=["a", "b"]).dropna()
+    target_series, beta, _z = pairs_target_positions(
+        aligned["a"], aligned["b"], int(params["lookback"]), params["entry_z"], params["exit_z"]
+    )
+    target = float(target_series.iloc[-1])
+    beta_now = float(beta.iloc[-1]) if not beta.empty else 1.0
+    pa, pb = float(aligned["a"].iloc[-1]), float(aligned["b"].iloc[-1])
+    now = datetime.now(UTC)
+
+    state = {**default_state(), "qty_b": 0.0, "avg_entry_b": 0.0, **(instance.state_json or {})}
+    guards = {**DEFAULT_GUARDS, **(instance.guards_json or {})}
+    sized = min(instance.qty_usd, guards["max_position_usd"]) / 2  # per leg
+    target_qty_a = target * sized / pa
+    target_qty_b = -target * beta_now * sized / (pb * max(abs(beta_now), 1e-9))
+
+    order: PaperOrder | None = None
+    for leg, symbol, price, key_q, key_e, tq in (
+        ("a", instance.symbol, pa, "position_qty", "avg_entry", target_qty_a),
+        ("b", symbol_b, pb, "qty_b", "avg_entry_b", target_qty_b),
+    ):
+        delta = tq - state[key_q]
+        if abs(delta) * price < instance.qty_usd * 0.01:
+            continue
+        side = "BUY" if delta > 0 else "SELL"
+        fill = await executor.market_order(symbol, side, abs(delta), price)
+        old = state[key_q]
+        new = old + (fill.qty if side == "BUY" else -fill.qty)
+        if old * new < 0:
+            state["realized_pnl"] += old * (fill.price - state[key_e])
+            state[key_e] = fill.price
+        elif abs(new) > abs(old):
+            total = abs(old) + fill.qty
+            state[key_e] = (
+                (abs(old) * state[key_e] + fill.qty * fill.price) / total if total else fill.price
+            )
+        else:
+            closed = abs(old) - abs(new)
+            sign = 1 if old > 0 else -1
+            state["realized_pnl"] += sign * closed * (fill.price - state[key_e])
+            if new == 0:
+                state[key_e] = 0.0
+        state[key_q] = new
+        order = PaperOrder(
+            id=str(uuid.uuid4()),
+            instance_id=instance.id,
+            ts=now,
+            symbol=symbol,
+            side=side,
+            type="MARKET",
+            qty=fill.qty,
+            price=fill.price,
+            status="filled",
+            signal=f"pairs target={target:+.0f} leg={leg}",
+            testnet_order_id=fill.testnet_order_id,
+        )
+        session.add(order)
+
+    unreal_a = state["position_qty"] * (pa - state["avg_entry"]) if state["position_qty"] else 0.0
+    unreal_b = state["qty_b"] * (pb - state["avg_entry_b"]) if state["qty_b"] else 0.0
+    equity = float(instance.qty_usd + state["realized_pnl"] + unreal_a + unreal_b)
+    instance.state_json = state
+    session.add(
+        PaperEquity(
+            instance_id=instance.id,
+            ts=now,
+            equity_usd=equity,
+            position_qty=state["position_qty"],
+            price=pa,
+        )
+    )
+    await session.commit()
+    return order
+
+
 def default_state() -> dict[str, Any]:
     return {
         "position_qty": 0.0,
@@ -57,6 +158,8 @@ async def evaluate_instance(
     if instance.status != "running":
         return None
     spec = STRATEGIES[instance.strategy]
+    if spec.needs_pair:
+        return await evaluate_pairs_instance(session, instance, df, executor)
     params = {
         p.name: float((instance.params_json or {}).get(p.name, p.default)) for p in spec.params
     }

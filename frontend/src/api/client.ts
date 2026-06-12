@@ -154,6 +154,7 @@ export interface StrategySpec {
   name: string
   description: string
   needs_funding: boolean
+  needs_pair?: boolean
   params: StrategyParam[]
 }
 
@@ -356,6 +357,7 @@ export const api = {
     name: string
     strategy: string
     symbol: string
+    symbol_b?: string | null
     interval: string
     qty_usd: number
     params: Record<string, number>
@@ -370,6 +372,7 @@ export const api = {
   createBacktest: (body: {
     strategy: string
     symbol: string
+    symbol_b?: string | null
     interval: string
     params: Record<string, number>
     fee_bps?: number

@@ -301,6 +301,7 @@ export default function BacktestPage() {
 
   const [strategyKey, setStrategyKey] = useState('sma_crossover')
   const [symbol, setSymbol] = useState('BTCUSDT')
+  const [symbolB, setSymbolB] = useState('ETHUSDT')
   const [interval, setInterval] = useState('1h')
   const [params, setParams] = useState<Record<string, number>>({})
   const [walkForward, setWalkForward] = useState(false)
@@ -340,9 +341,10 @@ export default function BacktestPage() {
       const { id } = await api.createBacktest({
         strategy: spec.key,
         symbol,
+        symbol_b: spec.needs_pair ? symbolB : null,
         interval,
         params: fullParams,
-        walk_forward: walkForward,
+        walk_forward: spec.needs_pair ? false : walkForward,
       })
       setRunId(id)
       void queryClient.invalidateQueries({ queryKey: ['backtests'] })
@@ -390,6 +392,21 @@ export default function BacktestPage() {
             ))}
           </select>
         </label>
+        {spec?.needs_pair && (
+          <label className="text-sm">
+            <div className="text-xs text-zinc-500">Symbol B (hedge leg)</div>
+            <select
+              aria-label="Symbol B"
+              value={symbolB}
+              onChange={(e) => setSymbolB(e.target.value)}
+              className="rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
+            >
+              {symbols.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="text-sm">
           <div className="text-xs text-zinc-500">Interval</div>
           <select
