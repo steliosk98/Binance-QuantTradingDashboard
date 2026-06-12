@@ -6,6 +6,7 @@ import {
   type BacktestMetrics,
   type StrategySpec,
 } from '../api/client'
+import Optimizer from '../components/Optimizer'
 import Plot from '../components/Plot'
 
 const METRIC_CARDS: [keyof BacktestMetrics, string, (v: number) => string][] = [
@@ -463,6 +464,18 @@ export default function BacktestPage() {
           </span>
         )}
       </div>
+
+      {spec && (
+        <Optimizer
+          spec={spec}
+          symbol={symbol}
+          interval={interval}
+          baseParams={Object.fromEntries(
+            spec.params.map((p) => [p.name, params[p.name] ?? p.default]),
+          )}
+          onPick={(picked) => setParams((prev) => ({ ...prev, ...picked }))}
+        />
+      )}
 
       {runId &&
         detail &&

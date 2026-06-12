@@ -316,7 +316,30 @@ export interface AlertEventOut {
   message: string
 }
 
+export interface OptimizeResponse {
+  strategy: string
+  symbol: string
+  param_x: string
+  param_y: string
+  x_values: number[]
+  y_values: number[]
+  bars: number
+  sharpe: (number | null)[][]
+  total_return: (number | null)[][]
+  best: { sharpe: number; total_return: number; params: Record<string, number> }
+}
+
 export const api = {
+  optimize: (body: {
+    strategy: string
+    symbol: string
+    interval: string
+    param_x: string
+    param_y: string
+    x_values: number[]
+    y_values: number[]
+    base_params?: Record<string, number>
+  }) => postJson<OptimizeResponse>('/optimize', body),
   alertRules: () => getJson<{ rules: AlertRuleOut[] }>('/alerts/rules'),
   createAlertRule: (body: {
     name: string
