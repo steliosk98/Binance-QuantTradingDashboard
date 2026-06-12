@@ -23,6 +23,7 @@ class CreateInstanceRequest(BaseModel):
     name: str = Field(min_length=1, max_length=60)
     strategy: str
     symbol: str = Field(min_length=5, max_length=20)
+    symbol_b: str | None = Field(default=None, min_length=5, max_length=20)
     interval: str = "1m"
     qty_usd: float = Field(default=1000.0, gt=0, le=1_000_000)
     params: dict[str, float] = Field(default_factory=dict)
@@ -61,6 +62,12 @@ async def create_instance(req: CreateInstanceRequest, db: DbSession) -> dict[str
         raise HTTPException(status_code=422, detail=f"unknown strategy {req.strategy!r}")
     if req.interval not in INTERVAL_MS:
         raise HTTPException(status_code=422, detail=f"unsupported interval {req.interval!r}")
+    spec = STRATEGIES[req.strategy]
+    params: dict[str, object] = dict(req.params)
+    if spec.needs_pair:
+        if not req.symbol_b or req.symbol_b.upper() == req.symbol.upper():
+            raise HTTPException(status_code=422, detail="pairs strategy needs a distinct symbol_b")
+        params["symbol_b"] = req.symbol_b.upper()
     row = PaperInstance(
         id=str(uuid.uuid4()),
         name=req.name,
@@ -69,7 +76,7 @@ async def create_instance(req: CreateInstanceRequest, db: DbSession) -> dict[str
         interval=req.interval,
         qty_usd=req.qty_usd,
         status="running",
-        params_json=dict(req.params),
+        params_json=params,
         guards_json={
             **DEFAULT_GUARDS,
             "max_position_usd": req.max_position_usd,

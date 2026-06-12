@@ -16,6 +16,7 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
   const [name, setName] = useState('my-strategy')
   const [strategyKey, setStrategyKey] = useState('zscore_mr')
   const [symbol, setSymbol] = useState('BTCUSDT')
+  const [symbolB, setSymbolB] = useState('ETHUSDT')
   const [interval, setInterval] = useState('1m')
   const [qtyUsd, setQtyUsd] = useState(1000)
   const [maxPos, setMaxPos] = useState(2000)
@@ -37,6 +38,7 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
         name,
         strategy: strategyKey,
         symbol,
+        symbol_b: spec.needs_pair ? symbolB : null,
         interval,
         qty_usd: qtyUsd,
         params: Object.fromEntries(
@@ -93,6 +95,21 @@ function InstanceForm({ onCreated }: { onCreated: () => void }) {
           ))}
         </select>
       </label>
+      {spec?.needs_pair && (
+        <label className="text-sm">
+          <div className="text-xs text-zinc-500">Symbol B</div>
+          <select
+            aria-label="Symbol B"
+            value={symbolB}
+            onChange={(e) => setSymbolB(e.target.value)}
+            className="rounded-sm border border-zinc-700 bg-zinc-950/60 px-2 py-1 font-mono text-sm"
+          >
+            {(symbolsQuery.data?.watchlist ?? ['ETHUSDT']).map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+        </label>
+      )}
       <label className="text-sm">
         <div className="text-xs text-zinc-500">Interval</div>
         <select

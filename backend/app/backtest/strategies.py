@@ -47,6 +47,7 @@ class StrategySpec:
     params: tuple[Param, ...]
     generate: Callable[[pd.DataFrame, dict[str, float]], pd.Series]
     needs_funding: bool = False
+    needs_pair: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -54,6 +55,7 @@ class StrategySpec:
             "name": self.name,
             "description": self.description,
             "needs_funding": self.needs_funding,
+            "needs_pair": self.needs_pair,
             "params": [p.to_dict() for p in self.params],
         }
 
@@ -174,6 +176,10 @@ def _zscore_mr(df: pd.DataFrame, p: dict[str, float]) -> pd.Series:
     return pd.Series(pos, index=df.index)
 
 
+def _pairs_unsupported(df: pd.DataFrame, p: dict[str, float]) -> pd.Series:
+    raise NotImplementedError("pairs_trading is executed by the dedicated pairs engine")
+
+
 def _funding_contrarian(df: pd.DataFrame, p: dict[str, float]) -> pd.Series:
     """Enter against extreme funding percentiles (needs `funding` column)."""
     if "funding" not in df.columns:
@@ -256,6 +262,18 @@ STRATEGIES: dict[str, StrategySpec] = {
                 Param("exit_z", "Exit |z|", "float", 0.5, 0.0, 2.0, 0.1, grid=(0.0, 0.5)),
             ),
             generate=_zscore_mr,
+        ),
+        StrategySpec(
+            key="pairs_trading",
+            name="Pairs Trading",
+            description="Dollar-neutral spread mean reversion on a cointegrated pair.",
+            params=(
+                Param("lookback", "Hedge/z lookback", "int", 100, 30, 500, 1, grid=(100, 200)),
+                Param("entry_z", "Entry |z|", "float", 2.0, 0.5, 5.0, 0.1, grid=(1.5, 2.0)),
+                Param("exit_z", "Exit |z|", "float", 0.5, 0.0, 2.0, 0.1, grid=(0.0, 0.5)),
+            ),
+            generate=_pairs_unsupported,
+            needs_pair=True,
         ),
         StrategySpec(
             key="funding_contrarian",
