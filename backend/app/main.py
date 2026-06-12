@@ -1,6 +1,7 @@
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.alerts import router as alerts_router
 from app.api.analytics import router as analytics_router
 from app.api.auth import enforce_production_auth, require_auth
 from app.api.auth import router as auth_router
@@ -47,3 +48,4 @@ app.include_router(backtests_router, dependencies=protected)
 app.include_router(paper_router, dependencies=protected)
 app.include_router(settings_router, dependencies=protected)
 app.include_router(portfolio_router, dependencies=protected)
+app.include_router(alerts_router, dependencies=protected)

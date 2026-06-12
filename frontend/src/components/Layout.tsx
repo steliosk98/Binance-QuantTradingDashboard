@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
 import { useAuthStore } from '../stores/auth'
+import AlertBell from './AlertBell'
 import TickerTape from './TickerTape'
 import { useWsStatus } from '../ws/hooks'
 
@@ -12,6 +13,7 @@ const NAV_ITEMS = [
   { to: '/research', label: 'Research' },
   { to: '/backtest', label: 'Backtest' },
   { to: '/paper', label: 'Paper Trading' },
+  { to: '/alerts', label: 'Alerts' },
   { to: '/portfolio', label: 'Portfolio' },
   { to: '/settings', label: 'Settings' },
 ]
@@ -118,6 +120,7 @@ export default function Layout() {
           ))}
           <div className="ml-auto flex items-center gap-4">
             <UtcClock />
+            <AlertBell />
             <WsIndicator />
             <LogoutButton />
           </div>

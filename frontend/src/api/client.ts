@@ -297,7 +297,39 @@ export interface PortfolioResponse {
   account_type: string | null
 }
 
+export interface AlertRuleOut {
+  id: string
+  created_at: string
+  name: string
+  kind: string
+  symbol: string | null
+  params: Record<string, number | string>
+  enabled: boolean
+  cooldown_s: number
+}
+
+export interface AlertEventOut {
+  id: string
+  rule_id: string
+  ts: string
+  message: string
+}
+
 export const api = {
+  alertRules: () => getJson<{ rules: AlertRuleOut[] }>('/alerts/rules'),
+  createAlertRule: (body: {
+    name: string
+    kind: string
+    symbol?: string | null
+    params: Record<string, number | string>
+    cooldown_s?: number
+  }) => postJson<AlertRuleOut>('/alerts/rules', body),
+  toggleAlertRule: (id: string) =>
+    postJson<AlertRuleOut>(`/alerts/rules/${id}/toggle`, {}),
+  deleteAlertRule: (id: string) =>
+    sendJson<{ status: string }>('DELETE', `/alerts/rules/${id}`),
+  alertEvents: (limit = 100) =>
+    getJson<{ events: AlertEventOut[] }>('/alerts/events', { limit }),
   login: (password: string) =>
     postJson<{ token: string; token_type: string }>('/auth/login', {
       password,

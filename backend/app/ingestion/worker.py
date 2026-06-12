@@ -72,6 +72,15 @@ async def poll_premium_index(redis: Any, interval_s: float = 5.0) -> None:
             await asyncio.sleep(interval_s)
 
 
+async def _run_alerts() -> None:
+    from app.alerts.runner import run_alert_engine
+
+    try:
+        await run_alert_engine()
+    except Exception:
+        logger.exception("alert engine crashed")
+
+
 async def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     settings = get_settings()
@@ -120,6 +129,7 @@ async def main() -> None:
             name="futures-stream",
         ),
         asyncio.create_task(poll_premium_index(redis), name="premium-index-poller"),
+        asyncio.create_task(_run_alerts(), name="alert-engine"),
     ]
     tasks.extend(
         asyncio.create_task(run_book_maintainer(s, redis), name=f"book-{s}")
