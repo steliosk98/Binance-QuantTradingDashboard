@@ -506,6 +506,36 @@ token (or Fly credentials), follow docs/DEPLOY.md — ≈15 minutes — then rec
   validation. Live: 8×8 SMA-crossover grid on 2 years of real BTCUSDT 1h → heatmap rendered,
   best cell (fast=32 slow=66, Sharpe 0.54) applied to the form via the UI.
 
+## V2 Stage 5 — Workspace UX + v2.0.0 (2026-06-12)
+
+### Built
+- ⌘K / Ctrl+K command palette: pages + "Chart <symbol>" jump actions, substring filter, full
+  keyboard navigation (↑↓/↵/esc), terminal styling, mounted globally in the shell with a ⌘K hint.
+- Multi-chart: "Grid 2×2" mode on the Chart page — four live candle panes with per-pane symbol
+  pickers sharing the global interval, each fed by its own candles topic.
+- README V2 refresh (highlights, screenshots for optimizer/alerts/palette/multichart, env table,
+  security model) + refreshed hero; FastAPI version 2.0.0.
+
+### Verification
+- Frontend 33 unit tests; **E2E now 6/6** (new: palette opens, filters to ETH, lands on the ETH
+  chart — with a fix for the React-render race between fill and Enter). Live checks: palette
+  jumped to SOLUSDT chart; grid mode rendered 4 live panes (28 canvases).
+
+---
+
+## V2.0.0 SUMMARY (2026-06-12)
+
+V2 delivered in five staged PRs (#14–#18), each CI-green and live-verified:
+1. **Security hardening** — login throttling, fail-closed production auth, WS first-frame auth,
+   CSP headers, logout, sanitized errors (closes the v1 audit HIGHs).
+2. **Alert engine** — 5 rule kinds evaluated live, cooldowns, event log + WS bell, Telegram.
+3. **Pairs trading** — rolling-hedge spread engine: backtests + sim paper, symbol_b through
+   API/UI.
+4. **Parameter optimizer** — grid-search Sharpe heatmap with apply-best.
+5. **Workspace UX** — ⌘K palette, 2×2 multi-chart, README/v2 docs.
+
+Totals: ~150 backend + 33 frontend + 6 E2E tests, all gates green. Tagged `v2.0.0`.
+
 ### Known issues / blockers (resolved)
 - **HARD BLOCKER: no GitHub remote or credentials.** The run instructions contained a literal
   `<REPO_URL>` placeholder; `gh` was not installed (now installed but not authenticated); no SSH
